@@ -1,0 +1,58 @@
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'checkstyle'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+mainClassName = "i2.act.main.FuzzPEG"
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation \
+    project(':libs:j-PEG')
+}
+
+test {
+  testLogging {
+    exceptionFormat = "full"
+  }
+  testLogging.showStandardStreams = true
+
+  afterSuite { suite, result ->
+    if (suite.parent == null) {
+      def testSummary = " ${result.resultType} (${result.testCount} tests, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped) "
+      println("\n+" + ('-' * testSummary.length()) + "+\n" + '|' + testSummary + "|\n+" + ('-' * testSummary.length()) + "+\n")
+    }
+  }
+}
+
+jar {
+  manifest {
+    attributes "Main-Class": "$mainClassName"
+  }
+
+  from {
+    configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
+
+checkstyle {
+  toolVersion = "7.6.1"
+  configFile = new File(rootDir, "checkstyle/style.xml")
+  ignoreFailures = false
+}
+checkstyleMain.source="src/main"
+checkstyleTest.source="src/test"
+
+compileJava {
+  options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+compileJava.finalizedBy(jar)
+
+compileTestJava {
+  options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}

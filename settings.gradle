@@ -1,0 +1,2 @@
+rootProject.name = 'FuzzPEG'
+include 'libs:j-PEG'
