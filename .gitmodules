@@ -1,0 +1,3 @@
+[submodule "libs/j-PEG"]
+	path = libs/j-PEG
+	url = https://github.com/FAU-Inf2/j-PEG.git
