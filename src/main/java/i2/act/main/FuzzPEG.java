@@ -1,12 +1,18 @@
 package i2.act.main;
 
 import i2.act.grammargraph.GrammarGraph;
+import i2.act.grammargraph.GrammarGraphNode;
+import i2.act.grammargraph.GrammarGraphNode.AlternativeNode;
+import i2.act.grammargraph.properties.MinHeightComputation;
 import i2.act.peg.ast.Grammar;
 import i2.act.peg.ast.visitors.NameAnalysis;
 import i2.act.peg.parser.PEGParser;
+import i2.act.peg.symbols.Symbol;
 import i2.act.util.FileUtil;
 import i2.act.util.options.ProgramArguments;
 import i2.act.util.options.ProgramArgumentsParser;
+
+import java.util.Map;
 
 public final class FuzzPEG {
 
@@ -40,6 +46,24 @@ public final class FuzzPEG {
 
     if (arguments.hasOption(OPTION_PRINT_GRAMMAR_GRAPH)) {
       grammarGraph.printAsDot();
+    }
+
+    final Map<GrammarGraphNode<?,?>, Integer> minHeights =
+        MinHeightComputation.computeMinHeights(grammarGraph);
+
+    if (true) { // TODO remove (or make optional)
+      for (final Map.Entry<GrammarGraphNode<?,?>, Integer> entry : minHeights.entrySet()) {
+        final GrammarGraphNode<?,?> node = entry.getKey();
+        final Integer minHeight = entry.getValue();
+
+        if (node instanceof AlternativeNode) {
+          final Symbol<?> symbol = ((AlternativeNode) node).getGrammarSymbol();
+
+          if (symbol != null) {
+            System.out.format("%30s => %d\n", symbol, minHeight);
+          }
+        }
+      }
     }
   }
 
