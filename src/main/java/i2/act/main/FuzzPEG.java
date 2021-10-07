@@ -55,11 +55,18 @@ public final class FuzzPEG {
   }
 
   private static final Grammar readGrammar(final String grammarPath) {
-    final String grammarInput = FileUtil.readFile(grammarPath);
-    final Grammar grammar = PEGParser.parse(grammarInput);
-    NameAnalysis.analyze(grammar);
+    try {
+      final String grammarInput = FileUtil.readFile(grammarPath);
+      final Grammar grammar = PEGParser.parse(grammarInput);
+      NameAnalysis.analyze(grammar);
 
-    return grammar;
+      return grammar;
+    } catch (final Exception exception) {
+      abort(exception.getMessage());
+
+      assert (false);
+      return null;
+    }
   }
 
 }
