@@ -1,5 +1,7 @@
 package i2.act.main;
 
+import i2.act.fuzzer.Fuzzer;
+import i2.act.fuzzer.TokenJoiner;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.AlternativeNode;
@@ -67,6 +69,11 @@ public final class FuzzPEG {
         }
       }
     }
+
+    final TokenJoiner joiner = new TokenJoiner(grammar, " "); // TODO make separator configurable
+
+    final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner);
+    System.out.println(fuzzer.generateProgram(13));
   }
 
   private static final void usage() {
