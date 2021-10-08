@@ -20,12 +20,14 @@ public final class FuzzPEG {
 
   private static final String OPTION_GRAMMAR = "--grammar";
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
+  private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
 
   static {
     argumentsParser = new ProgramArgumentsParser();
 
     argumentsParser.addOption(OPTION_GRAMMAR, true, true, "<path to grammar>");
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
+    argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
   }
 
   public static final void main(final String[] args) {
@@ -48,10 +50,10 @@ public final class FuzzPEG {
       grammarGraph.printAsDot();
     }
 
-    final Map<GrammarGraphNode<?,?>, Integer> minHeights =
-        MinHeightComputation.computeMinHeights(grammarGraph);
+    if (arguments.hasOption(OPTION_PRINT_MIN_HEIGHTS)) {
+      final Map<GrammarGraphNode<?,?>, Integer> minHeights =
+          MinHeightComputation.computeMinHeights(grammarGraph);
 
-    if (true) { // TODO remove (or make optional)
       for (final Map.Entry<GrammarGraphNode<?,?>, Integer> entry : minHeights.entrySet()) {
         final GrammarGraphNode<?,?> node = entry.getKey();
         final Integer minHeight = entry.getValue();
