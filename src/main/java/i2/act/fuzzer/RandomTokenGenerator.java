@@ -52,7 +52,7 @@ public final class RandomTokenGenerator {
 
   public final Token createRandomToken(final LexerSymbol lexerSymbol) {
     if (lexerSymbol == LexerSymbol.EOF) {
-      return new Token(lexerSymbol, null);
+      return new Token(lexerSymbol, "");
     }
 
     final NFA nfa = this.automata.get(lexerSymbol);
