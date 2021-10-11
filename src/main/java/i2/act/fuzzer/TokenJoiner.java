@@ -51,7 +51,7 @@ public final class TokenJoiner {
           }
 
           final NFA secondNFA = this.lexer.getNFA(secondSymbol);
-          if (secondNFA.prefixMatch(firstLiteral) >= firstLiteral.length()) {
+          if (secondNFA.isPossiblePrefix(firstLiteral)) {
             allOthersDoNotMatch = false;
             break;
           }
@@ -68,7 +68,7 @@ public final class TokenJoiner {
             }
 
             final NFA secondNFA = this.lexer.getNFA(secondSymbol);
-            if (secondNFA.prefixMatch(firstLiteral) >= firstLiteral.length()) {
+            if (secondNFA.isPossiblePrefix(firstLiteral)) {
               firstMap.put(secondSymbol, true);
             }
           }
