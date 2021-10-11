@@ -11,12 +11,20 @@ import i2.act.peg.ast.visitors.NameAnalysis;
 import i2.act.peg.parser.PEGParser;
 import i2.act.peg.symbols.Symbol;
 import i2.act.util.FileUtil;
+import i2.act.util.SafeWriter;
 import i2.act.util.options.ProgramArguments;
 import i2.act.util.options.ProgramArgumentsParser;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class FuzzPEG {
+
+  public static final String INFINITE_PROGRAMS = "inf";
+  public static final int VALUE_INFINITE_PROGRAMS = -1;
+
+  public static final int DEFAULT_BATCH_SIZE = 1000;
 
   private static final ProgramArgumentsParser argumentsParser;
 
@@ -28,8 +36,11 @@ public final class FuzzPEG {
 
   private static final String OPTION_SEED = "--seed";
   private static final String OPTION_COUNT = "--count";
+  private static final String OPTION_BATCH_SIZE = "--batchSize";
 
   private static final String OPTION_JOIN = "--join";
+
+  private static final String OPTION_OUT = "--out";
 
   static {
     argumentsParser = new ProgramArgumentsParser();
@@ -42,8 +53,11 @@ public final class FuzzPEG {
 
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
+    argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
 
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
+
+    argumentsParser.addOption(OPTION_OUT, false, true, "<file name pattern>");
   }
 
   public static final void main(final String[] args) {
@@ -85,22 +99,49 @@ public final class FuzzPEG {
     }
 
     final long initialSeed = arguments.getLongOptionOr(OPTION_SEED, System.currentTimeMillis());
-    final int count = arguments.getIntOptionOr(OPTION_COUNT, 1);
+    final int count;
+    {
+      if (arguments.hasOption(OPTION_COUNT)) {
+        final String countValue = arguments.getOption(OPTION_COUNT);
+
+        if (INFINITE_PROGRAMS.equalsIgnoreCase(countValue)) {
+          count = VALUE_INFINITE_PROGRAMS;
+        } else {
+          count = arguments.getIntOption(OPTION_COUNT);
+        }
+      } else {
+        count = 1;
+      }
+    }
+    final int batchSize = arguments.getIntOptionOr(OPTION_BATCH_SIZE, DEFAULT_BATCH_SIZE);
 
     final int maxHeight = arguments.getIntOption(OPTION_MAX_HEIGHT);
 
     final String separator = arguments.getOptionOr(OPTION_JOIN, " ");
     final TokenJoiner joiner = new TokenJoiner(grammar, separator);
 
+    final String fileNamePattern = arguments.getOptionOr(OPTION_OUT, null);
+
     final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner);
 
-    long seed = initialSeed;
-
-    for (int index = 0; index < count; ++index) {
+    for (int index = 0; index < count || count == VALUE_INFINITE_PROGRAMS; ++index) {
+      final long seed = initialSeed + index;
       fuzzer.setSeed(seed);
-      ++seed;
 
-      System.out.println(fuzzer.generateProgram(maxHeight));
+      final String program = fuzzer.generateProgram(maxHeight);
+
+      if (fileNamePattern == null) {
+        System.out.println(program);
+      } else {
+        final String fileName =
+            expandFileNamePattern(fileNamePattern, maxHeight, index, seed, batchSize);
+
+        FileUtil.createPathIfNotExists(fileName);
+
+        final SafeWriter writer = SafeWriter.openFile(fileName);
+        writer.write(program);
+        writer.close();
+      }
     }
   }
 
@@ -128,6 +169,15 @@ public final class FuzzPEG {
       assert (false);
       return null;
     }
+  }
+
+  private static final String expandFileNamePattern(final String fileNamePattern,
+      final int maxHeight, final int index, final long seed, final int batchSize) {
+    return fileNamePattern
+        .replaceAll(Pattern.quote("#{MAX_HEIGHT}"), Matcher.quoteReplacement("" + maxHeight))
+        .replaceAll(Pattern.quote("#{INDEX}"), Matcher.quoteReplacement("" + index))
+        .replaceAll(Pattern.quote("#{SEED}"), Matcher.quoteReplacement("" + seed))
+        .replaceAll(Pattern.quote("#{BATCH}"), Matcher.quoteReplacement("" + (index / batchSize)));
   }
 
 }
