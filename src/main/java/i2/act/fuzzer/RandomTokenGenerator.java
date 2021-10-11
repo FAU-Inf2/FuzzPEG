@@ -1,53 +1,33 @@
 package i2.act.fuzzer;
 
 import i2.act.grammargraph.GrammarGraph;
+import i2.act.packrat.Lexer;
 import i2.act.packrat.Token;
+import i2.act.packrat.TokenStream;
 import i2.act.packrat.nfa.CharacterSet;
 import i2.act.packrat.nfa.NFA;
 import i2.act.packrat.nfa.NFAState;
 import i2.act.packrat.nfa.Transition;
 import i2.act.peg.ast.CharacterRange;
 import i2.act.peg.ast.Group;
-import i2.act.peg.ast.LexerProduction;
 import i2.act.peg.ast.Range;
-import i2.act.peg.ast.RegularExpression;
 import i2.act.peg.ast.SingleCharacter;
 import i2.act.peg.symbols.LexerSymbol;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 public final class RandomTokenGenerator {
 
-  private final Map<LexerSymbol, NFA> automata;
+  private final Lexer lexer;
   private final Random rng;
 
+  private final boolean checkTokens = true; // TODO make configurable
+
   public RandomTokenGenerator(final GrammarGraph grammarGraph, final Random rng) {
-    this.automata = constructAutomata(grammarGraph);
+    this.lexer = Lexer.forGrammar(grammarGraph.getGrammar());
     this.rng = rng;
-  }
-
-  private final Map<LexerSymbol, NFA> constructAutomata(final GrammarGraph grammarGraph) {
-    final Map<LexerSymbol, NFA> automata = new HashMap<>();
-
-    for (final LexerSymbol lexerSymbol : grammarGraph.gatherLexerSymbols()) {
-      if (lexerSymbol == lexerSymbol.EOF) {
-        continue;
-      }
-
-      final LexerProduction lexerProduction = lexerSymbol.getProduction();
-      assert (lexerProduction != null);
-
-      final RegularExpression regularExpression = lexerProduction.getRegularExpression();
-      final NFA automaton = NFA.fromRegularExpression(regularExpression);
-
-      automata.put(lexerSymbol, automaton);
-    }
-
-    return automata;
   }
 
   public final Token createRandomToken(final LexerSymbol lexerSymbol) {
@@ -55,17 +35,19 @@ public final class RandomTokenGenerator {
       return new Token(lexerSymbol, "");
     }
 
-    final NFA nfa = this.automata.get(lexerSymbol);
+    final NFA nfa = this.lexer.getNFA(lexerSymbol);
     assert (nfa != null);
 
-    final String tokenValue;
+    String tokenValue;
     {
       if (nfa.hasLiteralString()) {
         tokenValue = nfa.getLiteralString();
       } else {
-        final StringBuilder builder = new StringBuilder();
-        createRandomString(nfa, builder);
-        tokenValue = builder.toString();
+        do {
+          final StringBuilder builder = new StringBuilder();
+          createRandomString(nfa, builder);
+          tokenValue = builder.toString();
+        } while (this.checkTokens && !isValid(tokenValue, lexerSymbol));
       }
     }
 
@@ -142,6 +124,25 @@ public final class RandomTokenGenerator {
       assert (range instanceof CharacterRange);
       return ((CharacterRange) range).getUpperCharacter().getValue();
     }
+  }
+
+  private final boolean isValid(final String string, final LexerSymbol expectedTokenSymbol) {
+    final TokenStream tokens;
+    {
+      try {
+        tokens = this.lexer.lex(string, true);
+      } catch (final Exception exception) {
+        return false;
+      }
+    }
+
+    if (tokens.numberOfTokens() != 1) {
+      return false;
+    }
+
+    final Token lexedToken = tokens.at(0);
+
+    return lexedToken.getTokenSymbol() == expectedTokenSymbol;
   }
 
 }
