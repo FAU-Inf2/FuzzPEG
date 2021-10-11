@@ -21,6 +21,8 @@ public final class FuzzPEG {
   private static final ProgramArgumentsParser argumentsParser;
 
   private static final String OPTION_GRAMMAR = "--grammar";
+  private static final String OPTION_MAX_HEIGHT = "--maxHeight";
+
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
 
@@ -31,6 +33,8 @@ public final class FuzzPEG {
     argumentsParser = new ProgramArgumentsParser();
 
     argumentsParser.addOption(OPTION_GRAMMAR, true, true, "<path to grammar>");
+    argumentsParser.addOption(OPTION_MAX_HEIGHT, true, true, "<max. height>");
+
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
 
@@ -79,8 +83,9 @@ public final class FuzzPEG {
     final long initialSeed = arguments.getLongOptionOr(OPTION_SEED, System.currentTimeMillis());
     final int count = arguments.getIntOptionOr(OPTION_COUNT, 1);
 
-    final TokenJoiner joiner = new TokenJoiner(grammar, " "); // TODO make separator configurable
+    final int maxHeight = arguments.getIntOption(OPTION_MAX_HEIGHT);
 
+    final TokenJoiner joiner = new TokenJoiner(grammar, " "); // TODO make separator configurable
     final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner);
 
     long seed = initialSeed;
@@ -89,7 +94,7 @@ public final class FuzzPEG {
       fuzzer.setSeed(seed);
       ++seed;
 
-      System.out.println(fuzzer.generateProgram(13));
+      System.out.println(fuzzer.generateProgram(maxHeight));
     }
   }
 
