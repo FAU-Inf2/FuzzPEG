@@ -24,12 +24,18 @@ public final class FuzzPEG {
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
 
+  private static final String OPTION_SEED = "--seed";
+  private static final String OPTION_COUNT = "--count";
+
   static {
     argumentsParser = new ProgramArgumentsParser();
 
     argumentsParser.addOption(OPTION_GRAMMAR, true, true, "<path to grammar>");
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
+
+    argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
+    argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
   }
 
   public static final void main(final String[] args) {
@@ -70,10 +76,21 @@ public final class FuzzPEG {
       }
     }
 
+    final long initialSeed = arguments.getLongOptionOr(OPTION_SEED, System.currentTimeMillis());
+    final int count = arguments.getIntOptionOr(OPTION_COUNT, 1);
+
     final TokenJoiner joiner = new TokenJoiner(grammar, " "); // TODO make separator configurable
 
     final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner);
-    System.out.println(fuzzer.generateProgram(13));
+
+    long seed = initialSeed;
+
+    for (int index = 0; index < count; ++index) {
+      fuzzer.setSeed(seed);
+      ++seed;
+
+      System.out.println(fuzzer.generateProgram(13));
+    }
   }
 
   private static final void usage() {

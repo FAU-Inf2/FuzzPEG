@@ -33,6 +33,10 @@ public final class Fuzzer {
   private final RandomTokenGenerator randomTokenGenerator;
 
   public Fuzzer(final GrammarGraph grammarGraph, final TokenJoiner joiner) {
+    this(grammarGraph, joiner, System.currentTimeMillis());
+  }
+
+  public Fuzzer(final GrammarGraph grammarGraph, final TokenJoiner joiner, final long seed) {
     this.grammarGraph = grammarGraph;
     this.joiner = joiner;
 
@@ -41,9 +45,13 @@ public final class Fuzzer {
     assert (this.minHeights.containsKey(grammarGraph.getRootNode()));
     this.minMaxHeight = this.minHeights.get(grammarGraph.getRootNode());
 
-    this.rng = new Random(); // TODO make configurable ?
+    this.rng = new Random(seed);
 
     this.randomTokenGenerator = new RandomTokenGenerator(grammarGraph, this.rng);
+  }
+
+  public final void setSeed(final long seed) {
+    this.rng.setSeed(seed);
   }
 
   public final String generateProgram(final int maxHeight) {
