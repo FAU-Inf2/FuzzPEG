@@ -77,13 +77,14 @@ public final class Fuzzer {
       return listOf(createTerminalNode(choice));
     }
 
-    final SequenceNode chosen = chooseAlternative(viableAlternatives(choice, maxHeight));
+    final int childHeight = childHeight(choice, maxHeight);
+    final SequenceNode chosen = chooseAlternative(viableAlternatives(choice, childHeight));
 
     final List<Node<?>> children = new ArrayList<>();
 
     for (final SequenceEdge element : chosen.getSuccessorEdges()) {
-      for (int count = count(element, maxHeight); count-- > 0;) {
-        children.addAll(generate(element.getTarget(), childHeight(choice, maxHeight)));
+      for (int count = count(element, childHeight); count-- > 0;) {
+        children.addAll(generate(element.getTarget(), childHeight));
       }
     }
 
@@ -146,7 +147,8 @@ public final class Fuzzer {
 
     assert (this.minHeights.containsKey(element.getTarget()));
     if (this.minHeights.get(element.getTarget()) > maxHeight) {
-      assert (quantifier != SequenceEdge.Quantifier.QUANT_NONE);
+      assert (quantifier != SequenceEdge.Quantifier.QUANT_NONE
+          && quantifier != SequenceEdge.Quantifier.QUANT_PLUS);
       return 0;
     }
 
