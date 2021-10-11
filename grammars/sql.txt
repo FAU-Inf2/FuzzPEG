@@ -1,0 +1,687 @@
+sql_script
+  : ( ( sql_statement ) <20>? SEMICOLON ) <10>* EOF
+  ;
+
+sql_statement
+  : alter_table_statement
+  | compound_select_statement
+  | create_index_statement
+  | create_schema_statement
+  | create_table_statement
+  | create_view_statement
+  | delete_statement
+  | delete_statement_limited
+  | drop_index_statement
+  | drop_table_statement
+  | drop_view_statement
+  | factored_select_statement
+  | insert_statement
+  | reindex_statement
+  | simple_select_statement
+  | select_statement
+  | update_statement
+  | update_statement_limited
+  | SEMICOLON
+  ;
+
+alter_table_statement
+  : ALTER TABLE ( database_name DOT )? table_name
+      ( RENAME TO new_table_name | ADD ( COLUMN )? column_def )
+  ;
+
+compound_select_statement
+  : ( WITH ( RECURSIVE )? common_table_expression ( COMMA common_table_expression )* )?
+      select_core ( ( UNION ( ALL )? | INTERSECT | EXCEPT ) ( distinct_or_all )? select_core )+
+      ( ORDER BY ordering_term ( COMMA ordering_term )* )?
+      ( LIMIT expr ( ( OFFSET | COMMA ) expr )? )?
+  ;
+
+create_index_statement
+  : CREATE ( UNIQUE )? INDEX ( IF NOT EXISTS )?
+      ( database_name DOT )? index_name ON table_name LPAREN indexed_column ( COMMA indexed_column )* RPAREN
+      ( WHERE expr )?
+  ;
+
+create_schema_statement
+  : CREATE SCHEMA schema_name
+  ;
+
+create_table_statement
+  : CREATE ( TEMP | TEMPORARY )? TABLE ( IF NOT EXISTS )?
+      ( database_name DOT )? table_name
+      ( LPAREN column_def ( COMMA column_def )* ( COMMA table_constraint )* RPAREN ( WITHOUT IDENTIFIER )? | AS select_statement )
+  ;
+
+create_view_statement
+  : CREATE ( TEMP | TEMPORARY )? VIEW ( IF NOT EXISTS )?
+      ( database_name DOT )? view_name AS select_statement
+  ;
+
+delete_statement
+  : ( with_clause )? DELETE FROM qualified_table_name ( WHERE expr )?
+  ;
+
+delete_statement_limited
+  : ( with_clause )? DELETE FROM qualified_table_name ( WHERE expr )?
+      ( ( ORDER BY ordering_term ( COMMA ordering_term )* )?  LIMIT expr ( ( OFFSET | COMMA ) expr )? )?
+  ;
+
+drop_index_statement
+  : DROP INDEX ( IF EXISTS )? ( database_name DOT )? index_name
+  ;
+
+drop_table_statement
+  : DROP TABLE ( IF EXISTS )? ( database_name DOT )? table_name
+  ;
+
+drop_view_statement
+  : DROP VIEW ( IF EXISTS )? ( database_name DOT )? view_name
+  ;
+
+factored_select_statement
+  : ( WITH ( RECURSIVE )? common_table_expression ( COMMA common_table_expression )* )?
+      select_core ( compound_operator ( distinct_or_all )? select_core )*
+      ( ORDER BY ordering_term ( COMMA ordering_term )* )?
+      ( LIMIT expr ( ( OFFSET | COMMA ) expr )? )?
+  ;
+
+insert_statement
+  : ( with_clause )?
+      ( INSERT | REPLACE | INSERT OR REPLACE | INSERT OR ROLLBACK | INSERT OR ABORT | INSERT OR FAIL | INSERT OR IGNORE ) INTO
+      ( database_name DOT )? table_name ( LPAREN column_name ( COMMA column_name )* RPAREN )?
+      ( VALUES LPAREN expr ( COMMA expr )* RPAREN ( COMMA LPAREN expr ( COMMA expr )* RPAREN )* | select_statement | DEFAULT VALUES )
+  ;
+
+reindex_statement
+  : REINDEX ( collation_name | ( database_name DOT )? ( table_name | index_name ) )?
+  ;
+
+simple_select_statement
+  : ( WITH ( RECURSIVE )? common_table_expression ( COMMA common_table_expression )* )?
+      select_core
+      ( ORDER BY ordering_term ( COMMA ordering_term )* )?
+      ( LIMIT expr ( ( OFFSET | COMMA ) expr )? )?
+  ;
+
+select_statement
+  : ( WITH ( RECURSIVE )? common_table_expression ( COMMA common_table_expression )* )?
+      select_or_values ( compound_operator ( distinct_or_all )? select_or_values )*
+      ( ORDER BY ordering_term ( COMMA ordering_term )* )?
+      ( LIMIT expr ( ( OFFSET | COMMA ) expr )? )?
+  ;
+
+distinct_or_all
+  : DISTINCT
+  | ALL
+  ;
+
+select_or_values
+  : SELECT ( distinct_or_all )? result_column ( COMMA result_column )*
+      ( FROM ( join_clause | table_or_subquery ( COMMA table_or_subquery )* ) )?
+      ( WHERE expr )?
+      ( GROUP BY expr ( COMMA expr )* )? ( ( HAVING expr )? )?
+  | VALUES LPAREN expr ( COMMA expr )* RPAREN ( COMMA LPAREN expr ( COMMA expr )* RPAREN )*
+  ;
+
+update_statement
+  : ( with_clause )? UPDATE
+      ( OR ROLLBACK | OR ABORT | OR REPLACE | OR FAIL | OR IGNORE )? qualified_table_name
+      SET column_name ASSIGN expr ( COMMA column_name ASSIGN expr )* ( WHERE expr )?
+  ;
+
+update_statement_limited
+  : ( with_clause )? UPDATE
+      ( OR ROLLBACK | OR ABORT | OR REPLACE | OR FAIL | OR IGNORE )? qualified_table_name
+      SET column_name ASSIGN expr ( COMMA column_name ASSIGN expr )* ( WHERE expr )?
+      (
+        ( ORDER BY ordering_term ( COMMA ordering_term )* )?
+        LIMIT expr ( ( OFFSET | COMMA ) expr )? 
+      )?
+  ;
+
+column_def
+  : column_name ( type_name )? ( column_constraint )*
+  ;
+
+type_name
+  : ( name )+ ( LPAREN signed_number RPAREN | LPAREN signed_number COMMA signed_number RPAREN )?
+  ;
+
+column_constraint
+  : ( CONSTRAINT name )?
+      (
+          PRIMARY KEY ( ASC | DESC )? conflict_clause ( AUTOINCREMENT )?
+          | ( NOT )? NULL conflict_clause
+          | UNIQUE conflict_clause
+          | CHECK LPAREN expr RPAREN
+          | DEFAULT ( signed_number | literal_value | LPAREN expr RPAREN )
+          | COLLATE collation_name
+          | foreign_key_clause
+          | GENERATED BY DEFAULT AS IDENTITY
+      )
+  ;
+
+conflict_clause
+  : ( ON CONFLICT ( ROLLBACK | ABORT | FAIL | IGNORE | REPLACE ) )?
+  ;
+
+expr
+  : or_expr
+  ;
+
+or_expr
+  : and_expr ( OR and_expr )*
+  ;
+
+and_expr
+  : not_expr ( AND not_expr )*
+  ;
+
+not_expr
+  : ( NOT )? collate_expr
+  ;
+
+collate_expr
+  : eq_expr ( COLLATE collation_name )*
+  ;
+
+eq_expr
+  : comp_expr ( ( ASSIGN | EQ | NOT_EQ1 | NOT_EQ2 | ( ( NOT )? LIKE | GLOB | MATCH | REGEXP ) ) comp_expr )*
+  ;
+
+comp_expr
+  : bit_expr ( ( LT | LT_EQ | GT | GT_EQ ) bit_expr )*
+  ;
+
+bit_expr
+  : between_expr ( ( LT2 | GT2 | AMP | PIPE ) between_expr )*
+  ;
+
+between_expr
+  : is_expr ( ( NOT )? BETWEEN is_expr AND is_expr )*
+  ;
+
+is_expr
+  : in_expr ( IS ( NOT )? in_expr )*
+  ;
+
+in_expr
+  : null_expr
+      ( ( NOT )? IN ( LPAREN ( select_statement | expr ( COMMA expr )* )?  RPAREN | ( database_name DOT )? table_name ) )*
+  ;
+
+null_expr
+  : add_expr ( ISNULL | NOTNULL | NOT NULL )*
+  ;
+
+add_expr
+  : mul_expr ( ( PLUS | MINUS ) mul_expr )*
+  ;
+
+mul_expr
+  : pipe2_expr ( ( STAR | DIV | MOD ) pipe2_expr )*
+  ;
+
+pipe2_expr
+  : unary_expr ( PIPE2 unary_expr )*
+  ;
+
+unary_expr
+  : ( unary_operator )? atom
+  ;
+
+atom
+  : aggregate_func_invoc
+  | window_func_invoc
+  | function_name LPAREN ( ( DISTINCT )? expr ( COMMA expr )* | STAR )? RPAREN
+  | database_name DOT table_name DOT column_name
+  | table_name DOT column_name
+  | column_name
+  | LPAREN expr RPAREN
+  | CAST LPAREN expr AS type_name RPAREN
+  | ( ( NOT )? EXISTS )? LPAREN select_statement RPAREN
+  | CASE ( expr )? ( WHEN expr THEN expr )+ ( ELSE expr )? END
+  | raise_function
+  | literal_value
+  ;
+
+aggregate_func_invoc
+  : aggregate_func LPAREN ( STAR | ( distinct_or_all )? expr ( COMMA expr )* )? RPAREN ( filter_clause )? ( OVER ( window_defn | window_name ) )?
+  ;
+
+aggregate_func
+  : AVG
+  | COUNT
+  | MAX
+  | MIN
+  | SUM
+  | TOTAL
+  ;
+
+window_func_invoc
+  : window_func LPAREN ( STAR | ( expr ( COMMA expr )* ) )? RPAREN ( filter_clause )? OVER ( window_defn | window_name )
+  ;
+
+window_func
+  : function_name
+  ;
+
+filter_clause
+  : FILTER LPAREN WHERE expr RPAREN
+  ;
+
+window_defn
+  : LPAREN ( base_window_name )?
+      ( PARTITION BY expr ( COMMA expr )* )?
+      ( ORDER BY ordering_term ( COMMA ordering_term)* )?
+      ( frame_spec )? RPAREN
+  ;
+
+base_window_name
+  : function_name
+  ;
+
+frame_spec
+  : ( RANGE | ROWS | GROUPS )
+      (
+        ( BETWEEN
+          (
+            ( UNBOUNDED PRECEDING )
+            | ( expr PRECEDING )
+            | ( CURRENT ROW )
+            | ( expr FOLLOWING )
+          )
+          AND
+          (
+            ( expr PRECEDING )
+            | ( CURRENT ROW )
+            | ( expr FOLLOWING )
+            | ( UNBOUNDED FOLLOWING )
+          )
+        )
+        | ( UNBOUNDED PRECEDING )
+        | ( expr PRECEDING )
+        | ( CURRENT ROW )
+      )
+      ( EXCLUDE ( NO OTHERS | CURRENT ROW | GROUP | TIES ) )?
+  ;
+
+window_name
+  : function_name
+  ;
+
+foreign_key_clause
+  : REFERENCES foreign_table ( LPAREN column_name ( COMMA column_name )* RPAREN )?
+      ( ( ON ( DELETE | UPDATE ) ( SET NULL | SET DEFAULT | CASCADE | RESTRICT | NO ACTION ) | MATCH name) )*
+      ( NOT? DEFERRABLE ( INITIALLY DEFERRED | INITIALLY IMMEDIATE )? )?
+  ;
+
+raise_function
+  : RAISE LPAREN ( IGNORE | ( ROLLBACK | ABORT | FAIL ) COMMA error_message ) RPAREN
+  ;
+
+indexed_column
+  : column_name ( COLLATE collation_name )? ( ASC | DESC )?
+  ;
+
+table_constraint
+  : ( CONSTRAINT name )?
+      (
+        ( PRIMARY KEY | UNIQUE ) LPAREN indexed_column ( COMMA indexed_column )* RPAREN conflict_clause
+        | CHECK LPAREN expr RPAREN
+        | FOREIGN KEY LPAREN column_name ( COMMA column_name )* RPAREN foreign_key_clause
+      )
+  ;
+
+with_clause
+  : WITH ( RECURSIVE )? cte_table_name AS LPAREN select_statement RPAREN
+      ( COMMA cte_table_name AS LPAREN select_statement RPAREN )*
+  ;
+
+qualified_table_name
+  : ( database_name DOT )? table_name ( INDEXED BY index_name | NOT INDEXED )?
+  ;
+
+ordering_term
+  : expr ( COLLATE collation_name )? ( ASC | DESC )? ( NULLS ( FIRST | LAST ) )?
+  ;
+
+pragma_value
+  : signed_number
+  | name
+  | STRING_LITERAL
+  ;
+
+common_table_expression
+  : table_name ( LPAREN column_name ( COMMA column_name )* RPAREN )? AS LPAREN select_statement RPAREN
+  ;
+
+result_column
+  : STAR
+  | table_name DOT STAR
+  | expr ( ( AS )? column_alias )?
+  ;
+
+table_or_subquery
+  : ( database_name DOT )? table_name ( ( AS )? table_alias )?  ( INDEXED BY index_name | NOT INDEXED )?
+  | LPAREN ( join_clause | table_or_subquery ( COMMA table_or_subquery )* ) RPAREN ( ( AS )? table_alias )?
+  | LPAREN select_statement RPAREN ( ( AS )? table_alias )?
+  ;
+
+join_clause
+  : table_or_subquery ( join_operator table_or_subquery join_constraint )*
+  ;
+
+join_operator
+  : COMMA
+  | ( CROSS | NATURAL )? ( INNER | ( FULL | LEFT | RIGHT ) ( OUTER )? )? JOIN
+  ;
+
+join_constraint
+  : ( ON expr | USING LPAREN column_name ( COMMA column_name )* RPAREN )?
+  ;
+
+select_core
+  : SELECT ( distinct_or_all )? result_column ( COMMA result_column )*
+      ( FROM ( join_clause | table_or_subquery ( COMMA table_or_subquery )* ) )?
+      ( WHERE expr )?
+      ( GROUP BY expr ( COMMA expr )* )? ( ( HAVING expr )? )?
+  | VALUES LPAREN expr ( COMMA expr )* RPAREN ( COMMA LPAREN expr ( COMMA expr )* RPAREN )*
+  ;
+
+compound_operator
+  : UNION
+  | UNION ALL
+  | INTERSECT
+  | EXCEPT
+  ;
+
+cte_table_name
+  : table_name ( LPAREN column_name ( COMMA column_name )* RPAREN )?
+  ;
+
+signed_number
+  : ( PLUS | MINUS )? NUMERIC_LITERAL
+  ;
+
+literal_value
+  : NUMERIC_LITERAL
+  | TRUE
+  | FALSE
+  | STRING_LITERAL
+  | BLOB_LITERAL
+  | NULL
+  | CURRENT_TIME
+  | CURRENT_DATE
+  | CURRENT_TIMESTAMP
+  ;
+
+unary_operator
+  : MINUS
+  | PLUS
+  | TILDE
+  | NOT
+  ;
+
+error_message
+  : STRING_LITERAL
+  ;
+
+column_alias
+  : IDENTIFIER
+  | STRING_LITERAL
+  ;
+
+name
+  : any_name
+  ;
+
+function_name
+  : any_name ( DOT any_name )?
+  ;
+
+database_name
+  : any_name
+  ;
+
+schema_name
+  : any_name
+  ;
+
+table_name 
+  : any_name
+  ;
+
+table_or_index_name 
+  : any_name
+  ;
+
+new_table_name 
+  : any_name
+  ;
+
+column_name 
+  : any_name
+  ;
+
+collation_name 
+  : any_name
+  ;
+
+foreign_table 
+  : any_name
+  ;
+
+index_name 
+  : any_name
+  ;
+
+trigger_name
+  : any_name
+  ;
+
+view_name 
+  : any_name
+  ;
+
+module_name 
+  : any_name
+  ;
+
+pragma_name 
+  : any_name
+  ;
+
+savepoint_name 
+  : any_name
+  ;
+
+table_alias 
+  : any_name
+  ;
+
+transaction_name
+  : any_name
+  ;
+
+any_name
+  : IDENTIFIER 
+  | STRING_LITERAL
+  | LPAREN any_name RPAREN
+  ;
+
+SEMICOLON: ';' ;
+DOT : '.';
+LPAREN : '(';
+RPAREN : ')';
+COMMA : ',';
+ASSIGN : '=';
+STAR : '*';
+PLUS : '+';
+MINUS : '-';
+TILDE : '~';
+PIPE2 : '||';
+DIV : '/';
+MOD : '%';
+LT2 : '<<';
+GT2 : '>>';
+AMP : '&';
+PIPE : '|';
+LT : '<';
+LT_EQ : '<=';
+GT : '>';
+GT_EQ : '>=';
+EQ : '==';
+NOT_EQ1 : '!=';
+NOT_EQ2 : '<>';
+
+ABORT : [Aa] [Bb] [Oo] [Rr] [Tt] ;
+ACTION : [Aa] [Cc] [Tt] [Ii] [Oo] [Nn] ;
+ADD : [Aa] [Dd] [Dd];
+ALL : [Aa] [Ll] [Ll];
+ALTER : [Aa] [Ll] [Tt] [Ee] [Rr];
+AND : [Aa] [Nn] [Dd];
+AS : [Aa] [Ss];
+ASC : [Aa] [Ss] [Cc];
+AUTOINCREMENT : [Aa] [Uu] [Tt] [Oo] [Ii] [Nn] [Cc] [Rr] [Ee] [Mm] [Ee] [Nn] [Tt];
+AVG : [Aa] [Vv] [Gg];
+BETWEEN : [Bb] [Ee] [Tt] [Ww] [Ee] [Ee] [Nn];
+BY : [Bb] [Yy];
+CASCADE : [Cc] [Aa] [Ss] [Cc] [Aa] [Dd] [Ee];
+CASE : [Cc] [Aa] [Ss] [Ee];
+CAST : [Cc] [Aa] [Ss] [Tt];
+CHECK : [Cc] [Hh] [Ee] [Cc] [Kk];
+COLLATE : [Cc] [Oo] [Ll] [Ll] [Aa] [Tt] [Ee];
+COLUMN : [Cc] [Oo] [Ll] [Uu] [Mm] [Nn];
+CONFLICT : [Cc] [Oo] [Nn] [Ff] [Ll] [Ii] [Cc] [Tt];
+CONSTRAINT : [Cc] [Oo] [Nn] [Ss] [Tt] [Rr] [Aa] [Ii] [Nn] [Tt];
+COUNT : [Cc] [Oo] [Uu] [Nn] [Tt];
+CREATE : [Cc] [Rr] [Ee] [Aa] [Tt] [Ee];
+CROSS : [Cc] [Rr] [Oo] [Ss] [Ss];
+CURRENT : [Cc] [Uu] [Rr] [Rr] [Ee] [Nn] [Tt];
+CURRENT_DATE : [Cc] [Uu] [Rr] [Rr] [Ee] [Nn] [Tt] '_' [Dd] [Aa] [Tt] [Ee];
+CURRENT_TIME : [Cc] [Uu] [Rr] [Rr] [Ee] [Nn] [Tt] '_' [Tt] [Ii] [Mm] [Ee];
+CURRENT_TIMESTAMP : [Cc] [Uu] [Rr] [Rr] [Ee] [Nn] [Tt] '_' [Tt] [Ii] [Mm] [Ee] [Ss] [Tt] [Aa] [Mm] [Pp];
+DEFAULT : [Dd] [Ee] [Ff] [Aa] [Uu] [Ll] [Tt];
+DEFERRABLE : [Dd] [Ee] [Ff] [Ee] [Rr] [Rr] [Aa] [Bb] [Ll] [Ee];
+DEFERRED : [Dd] [Ee] [Ff] [Ee] [Rr] [Rr] [Ee] [Dd];
+DELETE : [Dd] [Ee] [Ll] [Ee] [Tt] [Ee];
+DESC : [Dd] [Ee] [Ss] [Cc];
+DISTINCT : [Dd] [Ii] [Ss] [Tt] [Ii] [Nn] [Cc] [Tt];
+DROP : [Dd] [Rr] [Oo] [Pp];
+ELSE : [Ee] [Ll] [Ss] [Ee];
+END : [Ee] [Nn] [Dd];
+EXCEPT : [Ee] [Xx] [Cc] [Ee] [Pp] [Tt];
+EXCLUDE : [Ee] [Xx] [Cc] [Ll] [Uu] [Dd] [Ee];
+EXISTS : [Ee] [Xx] [Ii] [Ss] [Tt] [Ss];
+FAIL : [Ff] [Aa] [Ii] [Ll];
+FALSE : [Ff] [Aa] [Ll] [Ss] [Ee];
+FILTER : [Ff] [Ii] [Ll] [Tt] [Ee] [Rr];
+FIRST : [Ff] [Ii] [Rr] [Ss] [Tt];
+FOLLOWING : [Ff] [Oo] [Ll] [Ll] [Oo] [Ww] [Ii] [Nn] [Gg];
+FOREIGN : [Ff] [Oo] [Rr] [Ee] [Ii] [Gg] [Nn];
+FROM : [Ff] [Rr] [Oo] [Mm];
+FULL : [Ff] [Uu] [Ll] [Ll];
+GENERATED : [Gg] [Ee] [Nn] [Ee] [Rr] [Aa] [Tt] [Ee] [Dd];
+GLOB : [Gg] [Ll] [Oo] [Bb];
+GROUP : [Gg] [Rr] [Oo] [Uu] [Pp];
+GROUPS : [Gg] [Rr] [Oo] [Uu] [Pp] [Ss];
+HAVING : [Hh] [Aa] [Vv] [Ii] [Nn] [Gg];
+IDENTITY : [Ii] [Dd] [Ee] [Nn] [Tt] [Ii] [Tt] [Yy];
+IF : [Ii] [Ff];
+IGNORE : [Ii] [Gg] [Nn] [Oo] [Rr] [Ee];
+IMMEDIATE : [Ii] [Mm] [Mm] [Ee] [Dd] [Ii] [Aa] [Tt] [Ee];
+IN : [Ii] [Nn];
+INDEX : [Ii] [Nn] [Dd] [Ee] [Xx];
+INDEXED : [Ii] [Nn] [Dd] [Ee] [Xx] [Ee] [Dd];
+INITIALLY : [Ii] [Nn] [Ii] [Tt] [Ii] [Aa] [Ll] [Ll] [Yy];
+INNER : [Ii] [Nn] [Nn] [Ee] [Rr];
+INSERT : [Ii] [Nn] [Ss] [Ee] [Rr] [Tt];
+INTERSECT : [Ii] [Nn] [Tt] [Ee] [Rr] [Ss] [Ee] [Cc] [Tt];
+INTO : [Ii] [Nn] [Tt] [Oo];
+IS : [Ii] [Ss];
+ISNULL : [Ii] [Ss] [Nn] [Uu] [Ll] [Ll];
+JOIN : [Jj] [Oo] [Ii] [Nn];
+KEY : [Kk] [Ee] [Yy];
+LAST : [Ll] [Aa] [Ss] [Tt];
+LEFT : [Ll] [Ee] [Ff] [Tt];
+LIKE : [Ll] [Ii] [Kk] [Ee];
+LIMIT : [Ll] [Ii] [Mm] [Ii] [Tt];
+MATCH : [Mm] [Aa] [Tt] [Cc] [Hh];
+MAX : [Mm] [Aa] [Xx];
+MIN : [Mm] [Ii] [Nn];
+NATURAL : [Nn] [Aa] [Tt] [Uu] [Rr] [Aa] [Ll];
+NO : [Nn] [Oo];
+NOT : [Nn] [Oo] [Tt];
+NOTNULL : [Nn] [Oo] [Tt] [Nn] [Uu] [Ll] [Ll];
+NULL : [Nn] [Uu] [Ll] [Ll];
+NULLS : [Nn] [Uu] [Ll] [Ll] [Ss];
+OFFSET : [Oo] [Ff] [Ff] [Ss] [Ee] [Tt];
+ON : [Oo] [Nn];
+OR : [Oo] [Rr];
+ORDER : [Oo] [Rr] [Dd] [Ee] [Rr];
+OTHERS : [Oo] [Tt] [Hh] [Ee] [Rr] [Ss];
+OUTER : [Oo] [Uu] [Tt] [Ee] [Rr];
+OVER : [Oo] [Vv] [Ee] [Rr];
+PARTITION : [Pp] [Aa] [Rr] [Tt] [Ii] [Tt] [Ii] [Oo] [Nn];
+PRECEDING : [Pp] [Rr] [Ee] [Cc] [Ee] [Dd] [Ii] [Nn] [Gg];
+PRIMARY : [Pp] [Rr] [Ii] [Mm] [Aa] [Rr] [Yy];
+RAISE : [Rr] [Aa] [Ii] [Ss] [Ee];
+RANGE : [Rr] [Aa] [Nn] [Gg] [Ee];
+RECURSIVE : [Rr] [Ee] [Cc] [Uu] [Rr] [Ss] [Ii] [Vv] [Ee];
+REFERENCES : [Rr] [Ee] [Ff] [Ee] [Rr] [Ee] [Nn] [Cc] [Ee] [Ss];
+REGEXP : [Rr] [Ee] [Gg] [Ee] [Xx] [Pp];
+REINDEX : [Rr] [Ee] [Ii] [Nn] [Dd] [Ee] [Xx];
+RENAME : [Rr] [Ee] [Nn] [Aa] [Mm] [Ee];
+REPLACE : [Rr] [Ee] [Pp] [Ll] [Aa] [Cc] [Ee];
+RESTRICT : [Rr] [Ee] [Ss] [Tt] [Rr] [Ii] [Cc] [Tt];
+RIGHT : [Rr] [Ii] [Gg] [Hh] [Tt];
+ROLLBACK : [Rr] [Oo] [Ll] [Ll] [Bb] [Aa] [Cc] [Kk];
+ROW : [Rr] [Oo] [Ww];
+ROWS : [Rr] [Oo] [Ww] [Ss];
+SCHEMA : [Ss] [Cc] [Hh] [Ee] [Mm] [Aa];
+SELECT : [Ss] [Ee] [Ll] [Ee] [Cc] [Tt];
+SET : [Ss] [Ee] [Tt];
+SUM : [Ss] [Uu] [Mm];
+TABLE : [Tt] [Aa] [Bb] [Ll] [Ee];
+TEMP : [Tt] [Ee] [Mm] [Pp];
+TEMPORARY : [Tt] [Ee] [Mm] [Pp] [Oo] [Rr] [Aa] [Rr] [Yy];
+THEN : [Tt] [Hh] [Ee] [Nn];
+TIES : [Tt] [Ii] [Ee] [Ss];
+TO : [Tt] [Oo];
+TOTAL : [Tt] [Oo] [Tt] [Aa] [Ll];
+TRUE : [Tt] [Rr] [Uu] [Ee];
+UNBOUNDED : [Uu] [Nn] [Bb] [Oo] [Uu] [Nn] [Dd] [Ee] [Dd];
+UNION : [Uu] [Nn] [Ii] [Oo] [Nn];
+UNIQUE : [Uu] [Nn] [Ii] [Qq] [Uu] [Ee];
+UPDATE : [Uu] [Pp] [Dd] [Aa] [Tt] [Ee];
+USING : [Uu] [Ss] [Ii] [Nn] [Gg];
+VALUES : [Vv] [Aa] [Ll] [Uu] [Ee] [Ss];
+VIEW : [Vv] [Ii] [Ee] [Ww];
+WHEN : [Ww] [Hh] [Ee] [Nn];
+WHERE : [Ww] [Hh] [Ee] [Rr] [Ee];
+WITH : [Ww] [Ii] [Tt] [Hh];
+WITHOUT : [Ww] [Ii] [Tt] [Hh] [Oo] [Uu] [Tt];
+
+IDENTIFIER
+  : '"' ([^"] | '""')* '"'
+  | '`' ([^`] | '``')* '`'
+  | [a-zA-Z_] [a-zA-Z_0-9]*
+  ;
+
+NUMERIC_LITERAL
+  : [0-9]+ ( '.' [0-9]* )? ( [Ee] [-+]? [0-9]+ )?
+  | '.' [0-9]+ ( [Ee] [-+]? [0-9]+ )?
+  ;
+
+STRING_LITERAL
+  : '\'' ( [^'] | '\'\'' )* '\''
+  ;
+
+BLOB_LITERAL: [Xx] '\'' ( [^'] | '\'\'' )* '\'' ;
+
+@skip
+SPACE: ( ' ' | '\n' | '\r' | '\t' )+ ;
+
+@skip
+COMMENT: '--' [^\r\n]* ;

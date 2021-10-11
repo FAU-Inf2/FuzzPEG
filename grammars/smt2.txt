@@ -1,0 +1,276 @@
+script
+  : ( command ) <20>* EOF
+  ;
+
+command
+  : LPAREN ASSERT term RPAREN
+  | LPAREN CHECK_SAT RPAREN
+  | LPAREN CHECK_SAT_ASSUMING LPAREN prop_literal* RPAREN RPAREN
+  | LPAREN DECLARE_CONST symbol sort RPAREN
+  | LPAREN DECLARE_DATATYPE symbol datatype_dec RPAREN
+  | LPAREN DECLARE_DATATYPES LPAREN sort_dec+ RPAREN LPAREN datatype_dec+ RPAREN RPAREN
+  | LPAREN DECLARE_FUN symbol LPAREN sort* RPAREN sort RPAREN
+  | LPAREN DECLARE_SORT symbol NUMERAL RPAREN
+  | LPAREN DEFINE_FUN function_def RPAREN
+  | LPAREN DEFINE_FUN_REC function_def RPAREN
+  | LPAREN DEFINE_FUNS_REC LPAREN function_dec+ RPAREN LPAREN term+ RPAREN RPAREN
+  | LPAREN DEFINE_SORT symbol LPAREN symbol* RPAREN sort RPAREN
+  | LPAREN ECHO STRING RPAREN
+  | LPAREN EXIT RPAREN
+  | LPAREN GET_ASSERTIONS RPAREN
+  | LPAREN GET_ASSIGNMENTS RPAREN
+  | LPAREN GET_INFO info_flag RPAREN
+  | LPAREN GET_MODEL RPAREN
+  | LPAREN GET_OPTION KEYWORD RPAREN
+  | LPAREN GET_PROOF RPAREN
+  | LPAREN GET_UNSAT_ASSUMPTIONS RPAREN
+  | LPAREN GET_UNSAT_CORE RPAREN
+  | LPAREN GET_VALUE LPAREN term+ RPAREN RPAREN
+  | LPAREN POP NUMERAL RPAREN
+  | LPAREN PUSH NUMERAL RPAREN
+  | LPAREN RESET RPAREN
+  | LPAREN RESET_ASSERTIONS RPAREN
+  | LPAREN SET_INFO attribute RPAREN
+  | LPAREN SET_LOGIC symbol RPAREN
+  | LPAREN SET_OPTION option RPAREN
+  ;
+
+s_expr
+  : spec_constant
+  | symbol
+  | KEYWORD
+  | LPAREN operator? s_expr* RPAREN
+  ;
+
+term
+  : spec_constant
+  | qual_identifier
+  | LPAREN ( qual_identifier | operator ) term* RPAREN
+  | LPAREN LET LPAREN var_binding+ RPAREN term RPAREN
+  | LPAREN FORALL LPAREN sorted_var+ RPAREN term RPAREN
+  | LPAREN EXISTS LPAREN sorted_var+ RPAREN term RPAREN
+  | LPAREN MATCH term LPAREN match_case+ RPAREN RPAREN
+  | LPAREN EXCLAM term attribute+ RPAREN
+  ;
+
+operator
+  : NOT
+  | ARROW
+  ;
+
+spec_constant
+  : NUMERAL
+  | DECIMAL
+  | HEXADECIMAL
+  | BINARY
+  | STRING
+  | b_value
+  ;
+
+qual_identifier
+  : identifier
+  | LPAREN AS identifier sort RPAREN
+  ;
+
+var_binding
+  : LPAREN symbol term RPAREN
+  ;
+
+sorted_var
+  : LPAREN symbol sort RPAREN
+  ;
+
+pattern
+  : symbol
+  | LPAREN symbol symbol+ RPAREN
+  ;
+
+match_case
+  : LPAREN pattern term RPAREN
+  ;
+
+prop_literal
+  : symbol
+  | LPAREN NOT symbol RPAREN
+  ;
+
+symbol
+  : <25> SIMPLE_SYMBOL
+  |  <1> PIPE_SYMBOL
+  ;
+
+sort
+  : identifier
+  | LPAREN identifier sort+ RPAREN
+  ;
+
+identifier
+  : symbol
+  | LPAREN UNDERSCORE? symbol index+ RPAREN
+  ;
+
+index
+  : NUMERAL
+  | HEXADECIMAL
+  | symbol
+  ;
+
+datatype_dec
+  : LPAREN constructor_dec+ RPAREN
+  | LPAREN PAR LPAREN symbol+ RPAREN LPAREN constructor_dec+ RPAREN RPAREN
+  ;
+
+constructor_dec
+  : LPAREN symbol selector_dec* RPAREN
+  ;
+
+selector_dec
+  : LPAREN symbol sort RPAREN
+  ;
+
+sort_dec
+  : LPAREN symbol NUMERAL RPAREN
+  ;
+
+function_def
+  : symbol LPAREN sorted_var* RPAREN sort term
+  ;
+
+function_dec
+  : LPAREN symbol LPAREN sorted_var* RPAREN sort RPAREN
+  ;
+
+info_flag
+  : ALL_STATISTICS
+  | ASSERTION_STACK_LEVELS
+  | AUTHORS
+  | ERROR_BEHAVIOR
+  | NAME
+  | REASON_UNKNOWN
+  | VERSION
+  | KEYWORD
+  ;
+
+attribute
+  : KEYWORD attribute_value
+  | KEYWORD
+  ;
+
+attribute_value
+  : spec_constant
+  | symbol
+  | LPAREN s_expr* RPAREN
+  ;
+
+option
+  : DIAGNOSTIC_OUTPUT_CHANNEL STRING
+  | GLOBAL_DECLARATIONS b_value
+  | INTERACTIVE_MODE b_value
+  | PRINT_SUCCESS b_value
+  | PRODUCE_ASSERTIONS b_value
+  | PRODUCE_ASSIGNMENTS b_value
+  | PRODUCE_MODELS b_value
+  | PRODUCE_PROOFS b_value
+  | PRODUCE_UNSAT_ASSUMPTIONS b_value
+  | PRODUCE_UNSAT_CORES b_value
+  | RANDOM_SEED NUMERAL
+  | REGULAR_OUTPUT_CHANNEL STRING
+  | REPRODUCIBLE_RESOURCE_LIMIT NUMERAL
+  | VERBOSITY NUMERAL
+  | attribute
+  ;
+
+b_value
+  : TRUE
+  | FALSE
+  ;
+
+@skip
+SPACE: ( ' ' | '\t' | '\n' | '\r' )+ ;
+
+LPAREN: '(' ;
+RPAREN: ')' ;
+
+NOT: 'not' ;
+
+PAR: 'par' ;
+
+TRUE: 'true' ;
+FALSE: 'false' ;
+
+LET: 'let' ;
+FORALL: 'forall' ;
+EXISTS: 'exists' ;
+MATCH: 'match' ;
+EXCLAM: '!' ;
+
+UNDERSCORE: '_' ;
+
+AS: 'as' ;
+
+ASSERT: 'assert' ;
+CHECK_SAT: 'check-sat' ;
+CHECK_SAT_ASSUMING: 'check-sat-assuming' ;
+DECLARE_CONST: 'declare-const' ;
+DECLARE_DATATYPE: 'declare-datatype' ;
+DECLARE_DATATYPES: 'declare-datatypes' ;
+DECLARE_FUN: 'declare-fun' ;
+DECLARE_SORT: 'declare-sort' ;
+DEFINE_FUN: 'define-fun' ;
+DEFINE_FUN_REC: 'define-fun-rec' ;
+DEFINE_FUNS_REC: 'define-funs-rec' ;
+DEFINE_SORT: 'define-sort' ;
+ECHO: 'echo' ;
+EXIT: 'exit' ;
+GET_ASSERTIONS: 'get-assertions' ;
+GET_ASSIGNMENTS: 'get-assignments' ;
+GET_INFO: 'get-info' ;
+GET_MODEL: 'get-model' ;
+GET_OPTION: 'get-option' ;
+GET_PROOF: 'get-proof' ;
+GET_UNSAT_ASSUMPTIONS: 'get-unsat-assumptions' ;
+GET_UNSAT_CORE: 'get-unsat-core' ;
+GET_VALUE: 'get-value' ;
+POP: 'pop' ;
+PUSH: 'push' ;
+RESET: 'reset' ;
+RESET_ASSERTIONS: 'reset-assertions' ;
+SET_INFO: 'set-info' ;
+SET_LOGIC: 'set-logic' ;
+SET_OPTION: 'set-option' ;
+
+DIAGNOSTIC_OUTPUT_CHANNEL: ':diagnostic-output-channel' ;
+GLOBAL_DECLARATIONS: ':global-declarations' ;
+INTERACTIVE_MODE: ':interactive-mode' ;
+PRINT_SUCCESS: ':print-success' ;
+PRODUCE_ASSERTIONS: ':produce-assertions' ;
+PRODUCE_ASSIGNMENTS: ':produce-assignments' ;
+PRODUCE_MODELS: ':produce-models' ;
+PRODUCE_PROOFS: ':produce-proofs' ;
+PRODUCE_UNSAT_ASSUMPTIONS: ':produce-unsat-assumptions' ;
+PRODUCE_UNSAT_CORES: ':produce-unsat-cores' ;
+RANDOM_SEED: ':random-seed' ;
+REGULAR_OUTPUT_CHANNEL: ':regular-output-channel' ;
+REPRODUCIBLE_RESOURCE_LIMIT: ':reproducible-resource-limit' ;
+VERBOSITY: ':verbosity' ;
+
+ALL_STATISTICS: ':all-statistics' ;
+ASSERTION_STACK_LEVELS: ':assertion-stack-levels' ;
+AUTHORS: ':authors' ;
+ERROR_BEHAVIOR: ':error-behavior' ;
+NAME: ':name' ;
+REASON_UNKNOWN: ':reason-unknown' ;
+VERSION: ':version' ;
+
+ARROW: '=>' ;
+
+NUMERAL: '0' | [1-9] [0-9]* ;
+DECIMAL: ( '0' | [1-9] [0-9]* ) '.' '0'* ( '0' | [1-9] [0-9]* ) ;
+HEXADECIMAL: '#x' [0-9a-fA-F]+ ;
+BINARY: '#b' [0-1]+ ;
+STRING: '"' ( [^"] | '""')* '"' ;
+
+SIMPLE_SYMBOL: ( [a-zA-Z+/*=%?!.$_~&^<>] | '-' ) ( [a-zA-Z0-9+/*=%?!.$_~&^<>] | '-' )* ;
+PIPE_SYMBOL: '|' [^|\\]* '|' ;
+
+KEYWORD: ':' ( [a-zA-Z+/*=%?!.$_~&^] | '-' ) ( [a-zA-Z0-9+/*=%?!.$_~&^] | '-' )* ;

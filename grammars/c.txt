@@ -1,0 +1,481 @@
+translation_unit
+  : ( external_declaration ) <20>* EOF
+  ;
+
+external_declaration
+  : <7> function_definition
+  | <3> declaration
+  ;
+
+function_definition
+  : ( declaration_specifiers )? declarator ( declaration_list )? compound_statement
+  ;
+
+primary_expression
+  : IDENTIFIER
+  | integer_literal
+  | float_literal
+  | STRING_LITERAL
+  | LPAREN expression RPAREN
+  ;
+
+integer_literal
+  : DECIMAL_LITERAL
+  | OCTAL_LITERAL
+  | HEXADECIMAL_LITERAL
+  | BINARY_LITERAL
+  ;
+
+float_literal
+  : DECIMAL_FLOAT_LITERAL
+  #| HEXADECIMAL_FLOAT_LITERAL
+  ;
+
+postfix_expression
+  : LPAREN struct_or_union_specifier RPAREN LBRACE ( expression ( COMMA expression )* )? RBRACE
+  | primary_expression ( postfix_expression_rest )*
+  ;
+
+postfix_expression_rest
+  : LBRACK expression RBRACK
+  | LPAREN RPAREN
+  | LPAREN argument_expression_list RPAREN
+  | DOT IDENTIFIER
+  | PTR_OP IDENTIFIER
+  | INC_OP
+  | DEC_OP
+  ;
+
+argument_expression_list
+  : assignment_expression ( COMMA assignment_expression )*
+  ;
+
+unary_expression
+  : postfix_expression
+  | INC_OP unary_expression
+  | DEC_OP unary_expression
+  | unary_operator cast_expression
+  | SIZEOF unary_expression
+  | SIZEOF LPAREN type_name RPAREN
+  ;
+
+unary_operator
+  : AMPERSAND
+  | STAR
+  | PLUS
+  | MINUS
+  | TILDE
+  | EXCLAM
+  ;
+
+cast_expression
+  : unary_expression
+  | LPAREN type_name RPAREN cast_expression
+  ;
+
+multiplicative_expression
+  : cast_expression ( ( STAR | DIV | MOD ) cast_expression )*
+  ;
+
+additive_expression
+  : multiplicative_expression ( ( PLUS | MINUS ) multiplicative_expression )*
+  ;
+
+shift_expression
+  : additive_expression ( ( LEFT_OP | RIGHT_OP ) additive_expression )*
+  ;
+
+relational_expression
+  : shift_expression ( ( LT_OP | GT_OP | LE_OP | GE_OP ) shift_expression )*
+  ;
+
+equality_expression
+  : relational_expression ( ( EQ_OP | NE_OP ) relational_expression )*
+  ;
+
+and_expression
+  : equality_expression ( AMPERSAND equality_expression )*
+  ;
+
+exclusive_or_expression
+  : and_expression ( CARET and_expression )*
+  ;
+
+inclusive_or_expression
+  : exclusive_or_expression ( PIPE exclusive_or_expression )*
+  ;
+
+logical_and_expression
+  : inclusive_or_expression ( AND_OP inclusive_or_expression )*
+  ;
+
+logical_or_expression
+  : logical_and_expression ( OR_OP logical_and_expression )*
+  ;
+
+conditional_expression
+  : logical_or_expression ( QUEST expression COLON conditional_expression )?
+  ;
+
+assignment_expression
+  : unary_expression assignment_operator assignment_expression
+  | conditional_expression
+  ;
+
+assignment_operator
+  : EQUALS
+  | MUL_ASSIGN
+  | DIV_ASSIGN
+  | MOD_ASSIGN
+  | ADD_ASSIGN
+  | SUB_ASSIGN
+  | LEFT_ASSIGN
+  | RIGHT_ASSIGN
+  | AND_ASSIGN
+  | XOR_ASSIGN
+  | OR_ASSIGN
+  ;
+
+expression
+  : assignment_expression ( COMMA assignment_expression )*
+  ;
+
+constant_expression
+  : conditional_expression
+  ;
+
+declaration
+  : declaration_specifiers ( init_declarator_list )? SEMICOLON
+  ;
+
+declaration_specifiers
+  : ( storage_class_specifier | type_specifier | type_qualifier )+
+  ;
+
+init_declarator_list
+  : init_declarator ( COMMA init_declarator )*
+  ;
+
+init_declarator
+  : declarator ( EQUALS initializer )?
+  ;
+
+storage_class_specifier
+  : TYPEDEF
+  | EXTERN
+  | STATIC
+  | AUTO
+  | REGISTER
+  ;
+
+type_specifier
+  : VOID
+  | CHAR
+  | SHORT
+  | INT
+  | LONG
+  | FLOAT
+  | DOUBLE
+  | SIGNED
+  | UNSIGNED
+  | struct_or_union_specifier
+  | enum_specifier
+  ;
+
+struct_or_union_specifier
+  : struct_or_union IDENTIFIER LBRACE struct_declaration_list RBRACE
+  | struct_or_union LBRACE struct_declaration_list RBRACE
+  | struct_or_union IDENTIFIER
+  ;
+
+struct_or_union
+  : STRUCT
+  | UNION
+  ;
+
+struct_declaration_list
+  : ( struct_declaration )+
+  ;
+
+struct_declaration
+  : specifier_qualifier_list struct_declarator_list SEMICOLON
+  ;
+
+specifier_qualifier_list
+  : ( type_specifier | type_qualifier )+
+  ;
+
+struct_declarator_list
+  : struct_declarator ( COMMA struct_declarator )*
+  ;
+
+struct_declarator
+  : declarator
+  | COLON constant_expression
+  | declarator COLON constant_expression
+  ;
+
+enum_specifier
+  : ENUM LBRACE enumerator_list RBRACE
+  | ENUM IDENTIFIER LBRACE enumerator_list RBRACE
+  | ENUM IDENTIFIER
+  ;
+
+enumerator_list
+  : enumerator ( COMMA enumerator )*
+  ;
+
+enumerator
+  : IDENTIFIER ( EQUALS constant_expression )?
+  ;
+
+type_qualifier
+  : CONST
+  | VOLATILE
+  ;
+
+declarator
+  : ( pointer )? direct_declarator
+  ;
+
+direct_declarator
+  : IDENTIFIER COLON integer_literal
+  | IDENTIFIER ( direct_declarator_rest )*
+  | LPAREN declarator RPAREN ( direct_declarator_rest )*
+  ;
+
+direct_declarator_rest
+  : LBRACK constant_expression RBRACK
+  | LBRACK RBRACK
+  | LPAREN parameter_type_list RPAREN
+  | LPAREN identifier_list RPAREN
+  | LPAREN RPAREN
+  ;
+
+pointer
+  : ( STAR ( type_qualifier_list )? )+
+  ;
+
+type_qualifier_list
+  : ( type_qualifier )+
+  ;
+
+parameter_type_list
+  : parameter_list ( COMMA ELLIPSIS )?
+  ;
+
+parameter_list
+  : parameter_declaration ( COMMA parameter_declaration )*
+  ;
+
+parameter_declaration
+  : declaration_specifiers declarator
+  | declaration_specifiers abstract_declarator
+  | declaration_specifiers
+  ;
+
+identifier_list
+  : IDENTIFIER ( COMMA IDENTIFIER )*
+  ;
+
+type_name
+  : specifier_qualifier_list  ( abstract_declarator )?
+  ;
+
+abstract_declarator
+  : pointer
+  | direct_abstract_declarator
+  | pointer direct_abstract_declarator
+  ;
+
+direct_abstract_declarator
+  : LPAREN ( abstract_declarator | parameter_type_list )? RPAREN ( direct_abstract_declarator_rest )?
+  | LBRACK ( constant_expression )? RBRACK ( direct_abstract_declarator_rest )?
+  ;
+
+direct_abstract_declarator_rest
+  : LBRACK ( constant_expression )? RBRACK
+  | LPAREN ( parameter_type_list )? RPAREN
+  ;
+
+initializer
+  : assignment_expression
+  | LBRACE initializer_list ( COMMA )? RBRACE
+  ;
+
+initializer_list
+  : initializer ( COMMA initializer )*
+  ;
+
+statement
+  : labeled_statement
+  | compound_statement
+  | expression_statement
+  | selection_statement
+  | iteration_statement
+  | jump_statement
+  ;
+
+labeled_statement
+  : IDENTIFIER COLON statement
+  | CASE constant_expression COLON statement
+  | DEFAULT COLON statement
+  ;
+
+compound_statement
+  : LBRACE ( declaration_list ) <3>? ( statement_list ) <3>? RBRACE
+  ;
+
+declaration_list
+  : ( declaration ) <3>+
+  ;
+
+statement_list
+  : ( statement ) <3>+
+  ;
+
+expression_statement
+  : ( expression )? SEMICOLON
+  ;
+
+selection_statement
+  : IF LPAREN expression RPAREN statement ( ELSE statement )?
+  | SWITCH LPAREN expression RPAREN statement
+  ;
+
+iteration_statement
+  : WHILE LPAREN expression RPAREN statement
+  | DO statement WHILE LPAREN expression RPAREN SEMICOLON
+  | FOR LPAREN for_condition RPAREN statement
+  ;
+
+for_condition
+  : ( expression_statement | for_declaration SEMICOLON ) expression_statement ( expression )? 
+  ;
+
+for_declaration
+  : declaration_specifiers ( init_declarator_list )?
+  ;
+
+jump_statement
+  : GOTO IDENTIFIER SEMICOLON
+  | CONTINUE SEMICOLON
+  | BREAK SEMICOLON
+  | RETURN ( expression )? SEMICOLON
+  ;
+
+ADD_ASSIGN: '+=';
+AND_ASSIGN: '&=';
+DIV_ASSIGN: '/=';
+LEFT_ASSIGN: '<<=';
+MOD_ASSIGN: '%=';
+MUL_ASSIGN: '*=';
+OR_ASSIGN: '|=';
+RIGHT_ASSIGN: '>>=';
+SUB_ASSIGN: '-=';
+XOR_ASSIGN: '^=';
+
+AND_OP: '&&';
+DEC_OP: '--';
+EQ_OP: '==';
+GE_OP: '>=';
+GT_OP: '>';
+INC_OP: '++';
+LEFT_OP: '<<';
+LE_OP: '<=';
+LT_OP: '<';
+NE_OP: '!=';
+OR_OP: '||';
+PTR_OP: '->';
+RIGHT_OP: '>>';
+
+AMPERSAND: '&';
+DIV: '/';
+MINUS: '-';
+MOD: '%';
+PIPE: '|';
+PLUS: '+';
+STAR: '*';
+TILDE: '~';
+
+BREAK: 'break';
+CONTINUE: 'continue';
+AUTO: 'auto';
+CASE: 'case';
+CONST: 'const';
+DEFAULT: 'default';
+DO: 'do';
+ELSE: 'else';
+ENUM: 'enum';
+EXTERN: 'extern';
+FOR: 'for';
+GOTO: 'goto';
+IF: 'if';
+REGISTER: 'register';
+RETURN: 'return';
+SIZEOF: 'sizeof';
+STATIC: 'static';
+STRUCT: 'struct';
+SWITCH: 'switch';
+TYPEDEF: 'typedef';
+UNION: 'union';
+VOLATILE: 'volatile';
+WHILE: 'while';
+
+FLOAT: 'float';
+DOUBLE: 'double';
+LONG: 'long';
+SHORT: 'short';
+SIGNED: 'signed';
+UNSIGNED: 'unsigned';
+VOID: 'void';
+CHAR: 'char';
+
+@operator
+INT: ('u')? 'int' ( [0-9]* '_t' )?;
+
+CARET: '^';
+COLON: ':';
+COMMA: ',';
+ELLIPSIS: '...';
+DOT: '.';
+EQUALS: '=';
+EXCLAM: '!';
+QUEST: '?';
+SEMICOLON: ';';
+
+LBRACE: '{';
+LBRACK: '[';
+LPAREN: '(';
+RBRACE: '}';
+RBRACK: ']';
+RPAREN: ')';
+
+DECIMAL_LITERAL: [1-9] [0-9]* ( ( [Uu]? [Ll]* ) | ( [Ll]* [Uu]? ) ) ;
+OCTAL_LITERAL: '0' [0-7]* ( ( [Uu]? [Ll]* ) | ( [Ll]* [Uu]? ) ) ;
+HEXADECIMAL_LITERAL: '0' [Xx] [0-9a-fA-F]+ ( ( [Uu]? [Ll]* ) | ( [Ll]* [Uu]? ) ) ;
+BINARY_LITERAL: '0' [Bb] [01]+ ;
+
+DECIMAL_FLOAT_LITERAL:
+  (
+    ( ( [0-9]* '.' [0-9]+  | [0-9]+ '.' ) ( [Ee] [-+]? [0-9]+ )? )
+    | ( [0-9]+ ( [Ee] [-+]? [0-9]+ ) )
+  )
+  [FfLl]? ;
+
+STRING_LITERAL: '"' [^"]* '"';
+CHAR_LITERAL: '\'' [^'] '\'';
+
+IDENTIFIER: [a-zA-Z_]+ [a-zA-Z0-9_]*;
+
+@skip
+SPACE: ( ' ' | '\n' | '\r' | '\t' )+;
+
+@skip
+PREPROC: '#' ( [a-zA-Z._1-9()] | '>' | '<' | ' ' )*;
+
+@skip
+LINE_COMMENT: '//' [^\r\n]* ;
+
+@skip
+BLOCK_COMMENT: '/*' ( [^*]* '*'+ ) ( [^*/] [^*]* '*'+ )* '/' ;

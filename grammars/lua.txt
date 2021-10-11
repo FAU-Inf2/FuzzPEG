@@ -1,0 +1,226 @@
+program
+  : chunk EOF
+  ;
+
+chunk
+  : ( statement ( SEMICOLON )? ) <7>* ( last_statement ( SEMICOLON )? )?
+  ;
+
+block
+  : chunk
+  ;
+
+statement
+  : var_list ASSIGN expr_list
+  | function_call
+  | DO block END
+  | WHILE expr DO block END
+  | REPEAT block UNTIL expr
+  | IF expr THEN block ( ELSEIF expr THEN block )* ( ELSE block )? END
+  | FOR NAME ASSIGN expr COMMA expr ( COMMA expr )? DO block END
+  | FOR name_list IN expr_list DO block END
+  | FUNCTION function_name function_body
+  | LOCAL FUNCTION NAME function_body
+  | LOCAL name_list ( ASSIGN expr_list )?
+  ;
+
+last_statement
+  : RETURN expr_list
+  | BREAK
+  ;
+
+function_name
+  : NAME ( DOT NAME )* ( COLON NAME )?
+  ;
+
+var_list
+  : var ( COMMA var )*
+  ;
+
+var
+  : name_or_expr var_suffix*
+  ;
+
+var_suffix
+  : name_and_args* ( LBRACK expr RBRACK | DOT NAME )
+  ;
+
+name_and_args
+  : ( COLON NAME )? arguments
+  ;
+
+prefix_expr
+  : var ( name_and_args )*
+  ;
+
+function_call
+  : var ( name_and_args )+
+  ;
+
+name_or_expr
+  : NAME
+  | LPAREN expr RPAREN
+  ;
+
+name_list
+  : NAME ( COMMA NAME )*
+  ;
+
+expr_list
+  : ( expr COMMA )* expr
+  ;
+
+expr
+  : or_expr
+  ;
+
+or_expr
+  : and_expr ( OR and_expr )*
+  ;
+
+and_expr
+  : comp_expr ( AND comp_expr )*
+  ;
+
+comp_expr
+  : concat_expr ( ( LT | GT | LE | GE | NE | EQ ) concat_expr )*
+  ;
+
+concat_expr
+  : ( add_expr CONCAT )* add_expr
+  ;
+
+add_expr
+  : mul_expr ( ( ADD | SUB ) mul_expr )* ;
+
+mul_expr
+  : unary_expr ( ( MUL | DIV | MOD ) unary_expr )*
+  ;
+
+unary_expr
+  : ( NOT | LEN | SUB ) unary_expr
+  | exp_expr
+  ;
+
+exp_expr
+  : ( atom EXP )* atom
+  ;
+
+atom
+  : NIL
+  | FALSE
+  | TRUE
+  | NUMBER
+  | STRING
+  | DOTS
+  | function
+  | prefix_expr
+  | table_constructor
+  ;
+
+arguments
+  : LPAREN expr_list RPAREN
+  | table_constructor
+  | STRING
+  ;
+
+function
+  : FUNCTION function_body
+  ;
+
+function_body
+  : LPAREN ( param_list )? RPAREN block END
+  ;
+
+param_list
+  : name_list ( COMMA DOTS )?
+  | DOTS
+  ;
+
+table_constructor
+  : LBRACE ( field_list )? RBRACE
+  ;
+
+field_list
+  : field ( field_sep field )* ( field_sep )?
+  ;
+
+field
+  : LBRACK expr RBRACK ASSIGN expr
+  | NAME ASSIGN expr
+  | expr
+  ;
+
+field_sep
+  : COMMA
+  | SEMICOLON
+  ;
+
+SEMICOLON: ';' ;
+
+ASSIGN: '=' ;
+DO: 'do' ;
+END: 'end' ;
+WHILE: 'while' ;
+REPEAT: 'repeat' ;
+UNTIL: 'until' ;
+IF: 'if' ;
+THEN: 'then' ;
+ELSEIF: 'elseif' ;
+ELSE: 'else' ;
+FOR: 'for' ;
+COMMA: ',' ;
+IN: 'in' ;
+FUNCTION: 'function' ;
+LOCAL: 'local' ;
+RETURN: 'return' ;
+BREAK: 'break' ;
+DOT: '.' ;
+COLON: ':' ;
+LBRACK: '[' ;
+RBRACK: ']' ;
+LPAREN: '(' ;
+RPAREN: ')' ;
+LBRACE: '{' ;
+RBRACE: '}' ;
+
+OR: 'or' ;
+AND: 'and' ;
+LT: '<' ;
+GT: '>' ;
+LE: '<=' ;
+GE: '>=' ;
+NE: '~=' ;
+EQ: '==' ;
+CONCAT: '..' ;
+ADD: '+' ;
+SUB: '-' ;
+MUL: '*' ;
+DIV: '/' ;
+MOD: '%' ;
+NOT: 'not' ;
+LEN: '#' ;
+EXP: '^' ;
+
+NIL: 'nil' ;
+FALSE: 'false' ;
+TRUE: 'true' ;
+DOTS: '...' ;
+
+NUMBER
+  : [0-9]+ ( '.' [0-9]* )? ( [Ee] [-+]? [0-9]+ )?
+  | '0x' [0-9a-fA-F]+
+  ;
+
+STRING
+  : '\'' ( [^'] | '\\\'' )* '\''
+  | '"' ( [^"] | '\\"' )* '\"'
+  ;
+
+NAME: [a-zA-Z_] [a-zA-Z_0-9]* ;
+
+@skip
+SPACE: ( ' ' | '\n' | '\r' | '\t' )+ ;
+
+@skip
+COMMENT: '--' [^\r\n]* ;
