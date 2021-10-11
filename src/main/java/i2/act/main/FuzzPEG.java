@@ -29,6 +29,8 @@ public final class FuzzPEG {
   private static final String OPTION_SEED = "--seed";
   private static final String OPTION_COUNT = "--count";
 
+  private static final String OPTION_JOIN = "--join";
+
   static {
     argumentsParser = new ProgramArgumentsParser();
 
@@ -40,6 +42,8 @@ public final class FuzzPEG {
 
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
+
+    argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
   }
 
   public static final void main(final String[] args) {
@@ -85,7 +89,9 @@ public final class FuzzPEG {
 
     final int maxHeight = arguments.getIntOption(OPTION_MAX_HEIGHT);
 
-    final TokenJoiner joiner = new TokenJoiner(grammar, " "); // TODO make separator configurable
+    final String separator = arguments.getOptionOr(OPTION_JOIN, " ");
+    final TokenJoiner joiner = new TokenJoiner(grammar, separator);
+
     final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner);
 
     long seed = initialSeed;
