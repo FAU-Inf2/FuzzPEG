@@ -46,7 +46,7 @@ public final class TokenJoiner {
         boolean allOthersDoNotMatch = true;
 
         for (final LexerSymbol secondSymbol : grammar.getLexerSymbols()) {
-          if (firstSymbol == secondSymbol || secondSymbol.isSkippedToken()) {
+          if (firstSymbol == secondSymbol) {
             continue;
           }
 
