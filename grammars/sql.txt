@@ -21,7 +21,6 @@ sql_statement
   | select_statement
   | update_statement
   | update_statement_limited
-  | SEMICOLON
   ;
 
 alter_table_statement
@@ -87,7 +86,7 @@ factored_select_statement
 
 insert_statement
   : ( with_clause )?
-      ( INSERT | REPLACE | INSERT OR REPLACE | INSERT OR ROLLBACK | INSERT OR ABORT | INSERT OR FAIL | INSERT OR IGNORE ) INTO
+      ( INSERT OR REPLACE | INSERT OR ROLLBACK | INSERT OR ABORT | INSERT OR FAIL | INSERT OR IGNORE | INSERT | REPLACE ) INTO
       ( database_name DOT )? table_name ( LPAREN column_name ( COMMA column_name )* RPAREN )?
       ( VALUES LPAREN expr ( COMMA expr )* RPAREN ( COMMA LPAREN expr ( COMMA expr )* RPAREN )* | select_statement | DEFAULT VALUES )
   ;
@@ -390,8 +389,8 @@ select_core
   ;
 
 compound_operator
-  : UNION
-  | UNION ALL
+  : UNION ALL
+  | UNION
   | INTERSECT
   | EXCEPT
   ;
