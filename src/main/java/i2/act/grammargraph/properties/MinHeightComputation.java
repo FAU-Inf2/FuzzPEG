@@ -87,14 +87,18 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
       final SequenceEdge edge = (SequenceEdge) inSet.getFirst();
       final Integer minHeight = inSet.getSecond();
 
+      final Quantifier quantifier = edge.getQuantifier();
+      if (quantifier == Quantifier.QUANT_OPTIONAL || quantifier == Quantifier.QUANT_STAR) {
+        continue;
+      }
+
+      assert (quantifier == Quantifier.QUANT_NONE || quantifier == Quantifier.QUANT_PLUS);
+
       if (minHeight == UNKNOWN) {
         return UNKNOWN;
       }
 
-      final Quantifier quantifier = edge.getQuantifier();
-
-      if (minHeight > maxMinHeight
-          && (quantifier == Quantifier.QUANT_NONE || quantifier == Quantifier.QUANT_PLUS)) {
+      if (minHeight > maxMinHeight) {
         maxMinHeight = minHeight;
       }
     }
