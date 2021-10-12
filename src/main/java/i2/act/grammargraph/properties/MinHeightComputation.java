@@ -1,11 +1,11 @@
 package i2.act.grammargraph.properties;
 
 import i2.act.grammargraph.*;
-import i2.act.grammargraph.GrammarGraphEdge.AlternativeEdge;
-import i2.act.grammargraph.GrammarGraphEdge.SequenceEdge;
-import i2.act.grammargraph.GrammarGraphEdge.SequenceEdge.Quantifier;
-import i2.act.grammargraph.GrammarGraphNode.AlternativeNode;
-import i2.act.grammargraph.GrammarGraphNode.SequenceNode;
+import i2.act.grammargraph.GrammarGraphEdge.Alternative;
+import i2.act.grammargraph.GrammarGraphEdge.Element;
+import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
+import i2.act.grammargraph.GrammarGraphNode.Choice;
+import i2.act.grammargraph.GrammarGraphNode.Sequence;
 import i2.act.util.Pair;
 
 import java.util.Map;
@@ -27,7 +27,7 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
   }
 
   @Override
-  protected final Integer init(final AlternativeNode node, final GrammarGraph grammarGraph) {
+  protected final Integer init(final Choice node, final GrammarGraph grammarGraph) {
     if (node.isLeaf()) {
       return 1;
     } else {
@@ -36,12 +36,12 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
   }
 
   @Override
-  protected final Integer init(final SequenceNode node, final GrammarGraph grammarGraph) {
+  protected final Integer init(final Sequence node, final GrammarGraph grammarGraph) {
     return UNKNOWN;
   }
 
   @Override
-  protected final Integer transfer(final AlternativeNode node, final Integer in) {
+  protected final Integer transfer(final Choice node, final Integer in) {
     if (in == UNKNOWN) {
       return UNKNOWN;
     }
@@ -55,18 +55,18 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
   }
 
   @Override
-  protected final Integer transfer(final SequenceNode node, final Integer in) {
+  protected final Integer transfer(final Sequence node, final Integer in) {
     return in;
   }
 
   @Override
-  protected final Integer confluence(final AlternativeNode node,
+  protected final Integer confluence(final Choice node,
       final Iterable<Pair<GrammarGraphEdge<?, ?>, Integer>> inSets) {
     Integer minMinHeight = UNKNOWN;
 
     for (final Pair<GrammarGraphEdge<?, ?>, Integer> inSet : inSets) {
-      assert (inSet.getFirst() instanceof AlternativeEdge);
-      final AlternativeEdge edge = (AlternativeEdge) inSet.getFirst();
+      assert (inSet.getFirst() instanceof Alternative);
+      final Alternative edge = (Alternative) inSet.getFirst();
       final Integer minHeight = inSet.getSecond();
 
       if (minHeight < minMinHeight) {
@@ -78,13 +78,13 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
   }
 
   @Override
-  protected final Integer confluence(final SequenceNode node,
+  protected final Integer confluence(final Sequence node,
       final Iterable<Pair<GrammarGraphEdge<?, ?>, Integer>> inSets) {
     int maxMinHeight = 0;
 
     for (final Pair<GrammarGraphEdge<?, ?>, Integer> inSet : inSets) {
-      assert (inSet.getFirst() instanceof SequenceEdge);
-      final SequenceEdge edge = (SequenceEdge) inSet.getFirst();
+      assert (inSet.getFirst() instanceof Element);
+      final Element edge = (Element) inSet.getFirst();
       final Integer minHeight = inSet.getSecond();
 
       final Quantifier quantifier = edge.getQuantifier();

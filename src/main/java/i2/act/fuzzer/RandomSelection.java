@@ -1,8 +1,9 @@
 package i2.act.fuzzer;
 
-import i2.act.grammargraph.GrammarGraphEdge.AlternativeEdge;
-import i2.act.grammargraph.GrammarGraphEdge.SequenceEdge;
-import i2.act.grammargraph.GrammarGraphNode.SequenceNode;
+import i2.act.grammargraph.GrammarGraphEdge.Alternative;
+import i2.act.grammargraph.GrammarGraphEdge.Element;
+import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
+import i2.act.grammargraph.GrammarGraphNode.Sequence;
 
 import java.util.List;
 import java.util.Random;
@@ -28,7 +29,7 @@ public final class RandomSelection implements SelectionStrategy {
   }
 
   @Override
-  public final SequenceNode chooseAlternative(final List<AlternativeEdge> alternatives) {
+  public final Sequence chooseAlternative(final List<Alternative> alternatives) {
     assert (!alternatives.isEmpty());
 
     // handle fast case first
@@ -38,13 +39,13 @@ public final class RandomSelection implements SelectionStrategy {
 
     // roulette wheel selection
     final int totalWeight = alternatives.stream()
-        .map(AlternativeEdge::getWeight)
+        .map(Alternative::getWeight)
         .reduce(0, Integer::sum);
 
     final int chosen = this.rng.nextInt(totalWeight) + 1;
     int weightSum = 0;
 
-    for (final AlternativeEdge alternative : alternatives) {
+    for (final Alternative alternative : alternatives) {
       weightSum += alternative.getWeight();
 
       if (weightSum >= chosen) {
@@ -57,16 +58,16 @@ public final class RandomSelection implements SelectionStrategy {
   }
 
   @Override
-  public final int chooseCount(final SequenceEdge element) {
-    final SequenceEdge.Quantifier quantifier = element.getQuantifier();
+  public final int chooseCount(final Element element) {
+    final Quantifier quantifier = element.getQuantifier();
 
-    if (quantifier == SequenceEdge.Quantifier.QUANT_OPTIONAL) {
+    if (quantifier == Quantifier.QUANT_OPTIONAL) {
       return (this.rng.nextInt(element.getWeight() + 1) == 0) ? 0 : 1;
     } else {
-      assert (quantifier == SequenceEdge.Quantifier.QUANT_STAR
-          || quantifier == SequenceEdge.Quantifier.QUANT_PLUS);
+      assert (quantifier == Quantifier.QUANT_STAR
+          || quantifier == Quantifier.QUANT_PLUS);
 
-      int count = (quantifier == SequenceEdge.Quantifier.QUANT_PLUS) ? 1 : 0;
+      int count = (quantifier == Quantifier.QUANT_PLUS) ? 1 : 0;
       while (this.rng.nextInt(element.getWeight() + 1) != 0) {
         ++count;
       }

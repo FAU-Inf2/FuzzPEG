@@ -1,11 +1,12 @@
 package i2.act.fuzzer;
 
 import i2.act.grammargraph.GrammarGraph;
-import i2.act.grammargraph.GrammarGraphEdge.AlternativeEdge;
-import i2.act.grammargraph.GrammarGraphEdge.SequenceEdge;
+import i2.act.grammargraph.GrammarGraphEdge.Alternative;
+import i2.act.grammargraph.GrammarGraphEdge.Element;
+import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
 import i2.act.grammargraph.GrammarGraphNode;
-import i2.act.grammargraph.GrammarGraphNode.AlternativeNode;
-import i2.act.grammargraph.GrammarGraphNode.SequenceNode;
+import i2.act.grammargraph.GrammarGraphNode.Choice;
+import i2.act.grammargraph.GrammarGraphNode.Sequence;
 import i2.act.grammargraph.properties.MinHeightComputation;
 import i2.act.packrat.Token;
 import i2.act.packrat.cst.Node;
@@ -62,17 +63,17 @@ public final class Fuzzer {
     return nodes.get(0);
   }
 
-  public final List<Node<?>> generate(final AlternativeNode choice, final int maxHeight) {
+  public final List<Node<?>> generate(final Choice choice, final int maxHeight) {
     if (isTerminal(choice)) {
       return listOf(createTerminalNode(choice));
     }
 
     final int childHeight = childHeight(choice, maxHeight);
-    final SequenceNode chosen = chooseAlternative(viableAlternatives(choice, childHeight));
+    final Sequence chosen = chooseAlternative(viableAlternatives(choice, childHeight));
 
     final List<Node<?>> children = new ArrayList<>();
 
-    for (final SequenceEdge element : chosen.getSuccessorEdges()) {
+    for (final Element element : chosen.getSuccessorEdges()) {
       for (int count = count(element, childHeight); count-- > 0;) {
         children.addAll(generate(element.getTarget(), childHeight));
       }
@@ -85,15 +86,14 @@ public final class Fuzzer {
     }
   }
 
-  private final boolean isTerminal(final AlternativeNode choice) {
+  private final boolean isTerminal(final Choice choice) {
     return choice.getGrammarSymbol() instanceof LexerSymbol;
   }
 
-  private final List<AlternativeEdge> viableAlternatives(final AlternativeNode choice,
-      final int maxHeight) {
-    final List<AlternativeEdge> viableAlternatives = new ArrayList<>();
+  private final List<Alternative> viableAlternatives(final Choice choice, final int maxHeight) {
+    final List<Alternative> viableAlternatives = new ArrayList<>();
 
-    for (final AlternativeEdge alternative : choice.getSuccessorEdges()) {
+    for (final Alternative alternative : choice.getSuccessorEdges()) {
       assert (this.minHeights.containsKey(alternative.getTarget()));
       if (this.minHeights.get(alternative.getTarget()) <= maxHeight) {
         viableAlternatives.add(alternative);
@@ -104,28 +104,28 @@ public final class Fuzzer {
     return viableAlternatives;
   }
 
-  private final SequenceNode chooseAlternative(final List<AlternativeEdge> alternatives) {
+  private final Sequence chooseAlternative(final List<Alternative> alternatives) {
     return this.selectionStrategy.chooseAlternative(alternatives);
   }
 
-  private final int count(final SequenceEdge element, final int maxHeight) {
-    final SequenceEdge.Quantifier quantifier = element.getQuantifier();
+  private final int count(final Element element, final int maxHeight) {
+    final Quantifier quantifier = element.getQuantifier();
 
     assert (this.minHeights.containsKey(element.getTarget()));
     if (this.minHeights.get(element.getTarget()) > maxHeight) {
-      assert (quantifier != SequenceEdge.Quantifier.QUANT_NONE
-          && quantifier != SequenceEdge.Quantifier.QUANT_PLUS);
+      assert (quantifier != Quantifier.QUANT_NONE
+          && quantifier != Quantifier.QUANT_PLUS);
       return 0;
     }
 
-    if (quantifier == SequenceEdge.Quantifier.QUANT_NONE) {
+    if (quantifier == Quantifier.QUANT_NONE) {
       return 1;
     }
 
     return this.selectionStrategy.chooseCount(element);
   }
 
-  private final int childHeight(final AlternativeNode choice, final int maxHeight) {
+  private final int childHeight(final Choice choice, final int maxHeight) {
     return (isProduction(choice)) ? (maxHeight - 1) : (maxHeight);
   }
 
@@ -133,11 +133,11 @@ public final class Fuzzer {
     return Arrays.asList(node);
   }
 
-  private final boolean isProduction(final AlternativeNode choice) {
+  private final boolean isProduction(final Choice choice) {
     return choice.hasGrammarSymbol() && choice.getGrammarSymbol().getProduction() != null;
   }
 
-  private final TerminalNode createTerminalNode(final AlternativeNode choice) {
+  private final TerminalNode createTerminalNode(final Choice choice) {
     assert (choice.hasGrammarSymbol());
     assert (choice.getGrammarSymbol() instanceof LexerSymbol);
 
@@ -147,7 +147,7 @@ public final class Fuzzer {
     return new TerminalNode(token);
   }
 
-  private final NonTerminalNode createNonTerminalNode(final AlternativeNode choice,
+  private final NonTerminalNode createNonTerminalNode(final Choice choice,
       final List<Node<?>> children) {
     assert (choice.hasGrammarSymbol());
     assert (choice.getGrammarSymbol() instanceof ParserSymbol);

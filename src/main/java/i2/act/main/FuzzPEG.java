@@ -3,7 +3,7 @@ package i2.act.main;
 import i2.act.fuzzer.*;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphNode;
-import i2.act.grammargraph.GrammarGraphNode.AlternativeNode;
+import i2.act.grammargraph.GrammarGraphNode.Choice;
 import i2.act.grammargraph.properties.MinHeightComputation;
 import i2.act.packrat.Lexer;
 import i2.act.packrat.Parser;
@@ -95,8 +95,8 @@ public final class FuzzPEG {
         final GrammarGraphNode<?,?> node = entry.getKey();
         final Integer minHeight = entry.getValue();
 
-        if (node instanceof AlternativeNode) {
-          final Symbol<?> symbol = ((AlternativeNode) node).getGrammarSymbol();
+        if (node instanceof Choice) {
+          final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
 
           if (symbol != null) {
             System.out.format("%30s => %d\n", symbol, minHeight);
