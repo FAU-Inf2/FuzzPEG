@@ -1,0 +1,128 @@
+program
+  : ( global_declaration ) <20>* EOF
+  ;
+
+global_declaration
+  : variable_declaration
+  | function_declaration
+  ;
+
+variable_declaration
+  : type_name IDENTIFIER SEMICOLON
+  ;
+
+function_declaration
+  : type_name IDENTIFIER LPAREN parameter_declaration_list RPAREN block
+  ;
+
+parameter_declaration_list
+  : ( parameter_declaration ( COMMA parameter_declaration )* )?
+  ;
+
+parameter_declaration
+  : type_name IDENTIFIER
+  ;
+
+block
+  : LBRACE ( statement )* RBRACE
+  ;
+
+statement
+  : IDENTIFIER ASSIGN expression SEMICOLON
+  | IF LPAREN expression RPAREN block ( ELSE block )?
+  | RETURN ( expression )? SEMICOLON
+  | variable_declaration
+  ;
+
+type_name
+  : INT
+  | VOID
+  ;
+
+expression
+  : or_expression
+  ;
+
+or_expression
+  : and_expression ( OR_OP and_expression )*
+  ;
+
+and_expression
+  : compare_expression ( AND_OP compare_expression )*
+  ;
+
+compare_expression
+  : add_expression ( compare_operator add_expression )*
+  ;
+
+compare_operator
+  : EQUALS | LESS_THAN | GREATER_THAN | LESS_EQUALS | GREATER_EQUALS | NOT_EQUALS
+  ;
+
+add_expression
+  : mul_expression ( add_operator mul_expression )*
+  ;
+
+add_operator
+  : ADD | SUB
+  ;
+
+mul_expression
+  : factor ( mul_operator factor )*
+  ;
+
+mul_operator
+  : MUL | DIV
+  ;
+
+factor
+  : function_call
+  | NUM
+  | IDENTIFIER
+  | LPAREN expression RPAREN
+  ;
+
+function_call
+  : IDENTIFIER LPAREN ( argument_list )? RPAREN
+  ;
+
+argument_list
+  : expression ( COMMA expression )*
+  ;
+
+@skip
+SPACE: ( ' ' | '\n' | '\r' | '\t' )+ ;
+
+VOID: 'void' ;
+INT: 'int' ;
+IF: 'if' ;
+ELSE: 'else' ;
+RETURN: 'return' ;
+SEMICOLON: ';' ;
+ASSIGN: '=' ;
+EQUALS: '==' ;
+LESS_THAN: '<' ;
+GREATER_THAN: '>' ;
+LESS_EQUALS: '<=' ;
+GREATER_EQUALS: '>=' ;
+NOT_EQUALS: '!=' ;
+COMMA: ',' ;
+LPAREN: '(' ;
+RPAREN: ')' ;
+LBRACE: '{' ;
+RBRACE: '}' ;
+OR_OP: '||' ;
+AND_OP: '&&' ;
+ADD: '+' ;
+SUB: '-' ;
+MUL: '*' ;
+DIV: '/' ;
+
+NUM: '0' | ( [1-9][0-9]* ) ;
+IDENTIFIER: [a-zA-Z_] [a-zA-Z0-9_]* ;
+
+@skip
+LINE_COMMENT: '//' [^\r\n]* ;
+
+@skip
+BLOCK_COMMENT: '/*' ( [^*]* '*'+ ) ( [^*/] [^*]* '*'+ )* '/' ;
