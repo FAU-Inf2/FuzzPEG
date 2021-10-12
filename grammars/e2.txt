@@ -1,0 +1,181 @@
+program
+  : ( global_declaration ) <10>* EOF
+  ;
+
+global_declaration
+  : <3> variable_declaration
+  | <7> function_declaration
+  ;
+
+variable_declaration
+  : VAR IDENTIFIER COLON type_name SEMICOLON
+  ;
+
+function_declaration
+  : FUNC IDENTIFIER LPAREN parameter_list? RPAREN ( COLON type_name )? block END
+  ;
+
+parameter_list
+  : parameter_declaration ( COMMA parameter_declaration )*
+  ;
+
+parameter_declaration
+  : IDENTIFIER COLON type_name
+  ;
+
+type_name
+  : primitive_type_name ( LBRACK arith_expression RBRACK )*
+  ;
+
+primitive_type_name
+  : INT
+  | REAL
+  ;
+
+block
+  : ( variable_declaration ) <2>* ( statement) <7>*
+  ;
+
+statement
+  : function_call_statement
+  | assign_statement
+  | if_statement
+  | while_statement
+  | return_statement
+  ;
+
+function_call_statement
+  : function_call SEMICOLON
+  ;
+
+assign_statement
+  : lvalue ASSIGN arith_expression SEMICOLON
+  ;
+
+if_statement
+  : IF cond_expression THEN block ( ELSE block )? END
+  ;
+
+while_statement
+  : WHILE cond_expression DO block END
+  ;
+
+return_statement
+  : RETURN arith_expression? SEMICOLON
+  ;
+
+lvalue
+  : array_access
+  | IDENTIFIER
+  ;
+
+cond_expression
+  : or_expression
+  ;
+
+or_expression
+  : and_expression ( OR and_expression )*
+  ;
+
+and_expression
+  : compare_expression ( AND compare_expression )*
+  ;
+
+compare_expression
+  : arith_expression ( EQ | NE | LT | LE | GT | GE ) arith_expression
+  | LPAREN cond_expression RPAREN
+  ;
+
+arith_expression
+  : add_expression
+  ;
+
+add_expression
+  : mul_expression ( ( PLUS | MINUS ) mul_expression )*
+  ;
+
+mul_expression
+  : factor ( ( MUL | DIV ) factor )*
+  ;
+
+factor
+  : array_access
+  | function_call
+  | variable_access
+  | number_literal
+  | cast_expression
+  | LPAREN arith_expression RPAREN
+  ;
+
+variable_access
+  : IDENTIFIER
+  ;
+
+number_literal
+  : NUMBER
+  | CHAR_LITERAL
+  ;
+
+function_call
+  : IDENTIFIER LPAREN argument_list? RPAREN
+  ;
+
+argument_list
+  : argument ( COMMA argument )*
+  ;
+
+argument
+  : arith_expression
+  ;
+
+array_access
+  : IDENTIFIER ( LBRACK arith_expression RBRACK )+
+  ;
+
+cast_expression
+  : LPAREN arith_expression AS primitive_type_name RPAREN
+  ;
+
+VAR: 'var' ;
+FUNC: 'func' ;
+END: 'end' ;
+INT: 'int' ;
+REAL: 'real' ;
+IF: 'if' ;
+THEN: 'then' ;
+ELSE: 'else' ;
+WHILE: 'while' ;
+DO: 'do' ;
+RETURN: 'return' ;
+OR: 'or' ;
+AND: 'and' ;
+AS: 'as' ;
+LPAREN: '(' ;
+RPAREN: ')' ;
+LBRACK: '[' ;
+RBRACK: ']' ;
+COMMA: ',' ;
+COLON: ':' ;
+SEMICOLON: ';' ;
+ASSIGN: ':=' ;
+EQ: '==' ;
+NE: '!=' ;
+LT: '<' ;
+LE: '<=' ;
+GT: '>' ;
+GE: '>=' ;
+PLUS: '+' ;
+MINUS: '-' ;
+MUL: '*' ;
+DIV: '/' ;
+
+NUMBER: [0-9]+ ('.' [0-9]*)?  ;
+CHAR_LITERAL: '\'' [ -~] '\'' ;
+
+IDENTIFIER: [a-zA-Z_]+ [a-zA-Z0-9_]* ;
+
+@skip
+SPACE: ( ' ' | '\n' | '\r' | '\t' )+ ;
+
+@skip
+LINE_COMMENT: '#' [^\r\n]* ;
