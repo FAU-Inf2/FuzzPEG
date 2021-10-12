@@ -16,7 +16,6 @@ import i2.act.peg.symbols.LexerSymbol;
 
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 public final class RandomTokenGenerator implements TokenGenerator {
 
@@ -56,13 +55,12 @@ public final class RandomTokenGenerator implements TokenGenerator {
   }
 
   private final void createRandomString(final NFA nfa, final StringBuilder builder) {
-    final Set<NFAState> acceptingStates = nfa.getAcceptingStates();
     NFAState currentState = nfa.getStartState();
 
     while (true) {
       final List<Transition> transitions = currentState.getTransitions();
 
-      if (acceptingStates.contains(currentState)) {
+      if (isAcceptingState(currentState, nfa)) {
         if (transitions.isEmpty() || this.rng.nextBoolean()) {
           return;
         }
@@ -72,11 +70,19 @@ public final class RandomTokenGenerator implements TokenGenerator {
       final Transition transition = transitions.get(this.rng.nextInt(transitions.size()));
 
       if (!transition.isEpsilonTransition()) {
-        builder.append(randomCharacter(transition.getCharacters()));
+        builder.append(randomCharacter(transition));
       }
 
       currentState = transition.getTo();
     }
+  }
+
+  private final boolean isAcceptingState(final NFAState state, final NFA nfa) {
+    return nfa.getAcceptingStates().contains(state);
+  }
+
+  private final char randomCharacter(final Transition transition) {
+    return randomCharacter(transition.getCharacters());
   }
 
   private final char randomCharacter(final CharacterSet characterSet) {
