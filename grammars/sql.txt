@@ -92,7 +92,7 @@ insert_statement
   ;
 
 reindex_statement
-  : REINDEX ( collation_name | ( database_name DOT )? ( table_name | index_name ) )?
+  : REINDEX ( ( database_name DOT )? ( table_name | index_name ) | collation_name )?
   ;
 
 simple_select_statement
