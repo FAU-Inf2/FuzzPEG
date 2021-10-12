@@ -6,6 +6,9 @@ import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.AlternativeNode;
 import i2.act.grammargraph.properties.MinHeightComputation;
+import i2.act.packrat.Lexer;
+import i2.act.packrat.Parser;
+import i2.act.packrat.TokenStream;
 import i2.act.peg.ast.Grammar;
 import i2.act.peg.ast.visitors.NameAnalysis;
 import i2.act.peg.parser.PEGParser;
@@ -42,6 +45,8 @@ public final class FuzzPEG {
 
   private static final String OPTION_OUT = "--out";
 
+  private static final String OPTION_TEST_PARSER = "--testParser";
+
   static {
     argumentsParser = new ProgramArgumentsParser();
 
@@ -58,6 +63,8 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
 
     argumentsParser.addOption(OPTION_OUT, false, true, "<file name pattern>");
+
+    argumentsParser.addOption(OPTION_TEST_PARSER, false);
   }
 
   public static final void main(final String[] args) {
@@ -122,6 +129,19 @@ public final class FuzzPEG {
 
     final String fileNamePattern = arguments.getOptionOr(OPTION_OUT, null);
 
+    final boolean testParser = arguments.hasOption(OPTION_TEST_PARSER);
+    final Lexer lexer;
+    final Parser parser;
+    {
+      if (testParser) {
+        lexer = Lexer.forGrammar(grammar);
+        parser = Parser.fromGrammar(grammar);
+      } else {
+        lexer = null;
+        parser = null;
+      }
+    }
+
     final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner);
 
     for (int index = 0; index < count || count == VALUE_INFINITE_PROGRAMS; ++index) {
@@ -130,9 +150,18 @@ public final class FuzzPEG {
 
       final String program = fuzzer.generateProgram(maxHeight);
 
-      if (fileNamePattern == null) {
+      if (testParser) {
+        try {
+          final TokenStream tokens = lexer.lex(program);
+          parser.parse(tokens);
+        } catch (final Exception exception) {
+          System.err.format("[!] parsing failed for seed %d: %s\n", seed, exception.getMessage());
+        }
+      } else if (fileNamePattern == null) {
         System.out.println(program);
-      } else {
+      }
+
+      if (fileNamePattern != null) {
         final String fileName =
             expandFileNamePattern(fileNamePattern, maxHeight, index, seed, batchSize);
 
