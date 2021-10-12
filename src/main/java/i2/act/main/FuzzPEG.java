@@ -1,7 +1,6 @@
 package i2.act.main;
 
-import i2.act.fuzzer.Fuzzer;
-import i2.act.fuzzer.TokenJoiner;
+import i2.act.fuzzer.*;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.AlternativeNode;
@@ -19,6 +18,7 @@ import i2.act.util.options.ProgramArguments;
 import i2.act.util.options.ProgramArgumentsParser;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -142,11 +142,16 @@ public final class FuzzPEG {
       }
     }
 
-    final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner);
+    final Random rng = new Random();
+
+    final TokenGenerator tokenGenerator = new RandomTokenGenerator(grammarGraph, rng);
+    final SelectionStrategy selectionStrategy = new RandomSelection(rng);
+
+    final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner, tokenGenerator, selectionStrategy);
 
     for (int index = 0; index < count || count == VALUE_INFINITE_PROGRAMS; ++index) {
       final long seed = initialSeed + index;
-      fuzzer.setSeed(seed);
+      rng.setSeed(seed);
 
       final String program = fuzzer.generateProgram(maxHeight);
 

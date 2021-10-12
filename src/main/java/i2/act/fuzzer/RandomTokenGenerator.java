@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-public final class RandomTokenGenerator {
+public final class RandomTokenGenerator implements TokenGenerator {
 
   private final Lexer lexer;
   private final Random rng;
@@ -30,7 +30,8 @@ public final class RandomTokenGenerator {
     this.rng = rng;
   }
 
-  public final Token createRandomToken(final LexerSymbol lexerSymbol) {
+  @Override
+  public final Token createToken(final LexerSymbol lexerSymbol) {
     if (lexerSymbol == LexerSymbol.EOF) {
       return new Token(lexerSymbol, "");
     }

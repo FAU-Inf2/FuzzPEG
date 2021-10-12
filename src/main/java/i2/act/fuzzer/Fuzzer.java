@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public final class Fuzzer {
 
@@ -28,15 +27,11 @@ public final class Fuzzer {
   private final Map<GrammarGraphNode<?,?>, Integer> minHeights;
   private final int minMaxHeight;
 
-  private final Random rng;
+  private final TokenGenerator tokenGenerator;
+  private final SelectionStrategy selectionStrategy;
 
-  private final RandomTokenGenerator randomTokenGenerator;
-
-  public Fuzzer(final GrammarGraph grammarGraph, final TokenJoiner joiner) {
-    this(grammarGraph, joiner, System.currentTimeMillis());
-  }
-
-  public Fuzzer(final GrammarGraph grammarGraph, final TokenJoiner joiner, final long seed) {
+  public Fuzzer(final GrammarGraph grammarGraph, final TokenJoiner joiner,
+      final TokenGenerator tokenGenerator, final SelectionStrategy selectionStrategy) {
     this.grammarGraph = grammarGraph;
     this.joiner = joiner;
 
@@ -45,13 +40,8 @@ public final class Fuzzer {
     assert (this.minHeights.containsKey(grammarGraph.getRootNode()));
     this.minMaxHeight = this.minHeights.get(grammarGraph.getRootNode());
 
-    this.rng = new Random(seed);
-
-    this.randomTokenGenerator = new RandomTokenGenerator(grammarGraph, this.rng);
-  }
-
-  public final void setSeed(final long seed) {
-    this.rng.setSeed(seed);
+    this.tokenGenerator = tokenGenerator;
+    this.selectionStrategy = selectionStrategy;
   }
 
   public final String generateProgram(final int maxHeight) {
@@ -115,31 +105,7 @@ public final class Fuzzer {
   }
 
   private final SequenceNode chooseAlternative(final List<AlternativeEdge> alternatives) {
-    assert (!alternatives.isEmpty());
-
-    // handle fast case first
-    if (alternatives.size() == 1) {
-      return alternatives.get(0).getTarget();
-    }
-
-    // roulette wheel selection
-    final int totalWeight = alternatives.stream()
-        .map((alternative) -> alternative.getWeight())
-        .reduce(0, Integer::sum);
-
-    final int chosen = this.rng.nextInt(totalWeight) + 1;
-    int weightSum = 0;
-
-    for (final AlternativeEdge alternative : alternatives) {
-      weightSum += alternative.getWeight();
-
-      if (weightSum >= chosen) {
-        return alternative.getTarget();
-      }
-    }
-
-    assert (false);
-    return null;
+    return this.selectionStrategy.chooseAlternative(alternatives);
   }
 
   private final int count(final SequenceEdge element, final int maxHeight) {
@@ -152,25 +118,11 @@ public final class Fuzzer {
       return 0;
     }
 
-    switch (quantifier) {
-      case QUANT_NONE: {
-        return 1;
-      }
-      case QUANT_OPTIONAL: {
-        return (this.rng.nextInt(element.getWeight() + 1) == 0) ? 0 : 1;
-      }
-      default: {
-        assert (quantifier == SequenceEdge.Quantifier.QUANT_STAR
-            || quantifier == SequenceEdge.Quantifier.QUANT_PLUS);
-
-        int count = (quantifier == SequenceEdge.Quantifier.QUANT_PLUS) ? 1 : 0;
-        while (this.rng.nextInt(element.getWeight() + 1) != 0) {
-          ++count;
-        }
-
-        return count;
-      }
+    if (quantifier == SequenceEdge.Quantifier.QUANT_NONE) {
+      return 1;
     }
+
+    return this.selectionStrategy.chooseCount(element);
   }
 
   private final int childHeight(final AlternativeNode choice, final int maxHeight) {
@@ -190,7 +142,7 @@ public final class Fuzzer {
     assert (choice.getGrammarSymbol() instanceof LexerSymbol);
 
     final LexerSymbol symbol = (LexerSymbol) choice.getGrammarSymbol();
-    final Token token = this.randomTokenGenerator.createRandomToken(symbol);
+    final Token token = this.tokenGenerator.createToken(symbol);
 
     return new TerminalNode(token);
   }
