@@ -197,6 +197,10 @@ public final class FuzzPEG {
         writer.close();
       }
     }
+
+    System.err.format("[i] required %d attempts for %d programs\n",
+        fuzzerLoop.numberOfAttempts(),
+        fuzzerLoop.numberOfPrograms());
   }
 
   private static final void usage() {
