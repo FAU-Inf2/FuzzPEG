@@ -41,6 +41,8 @@ public final class FuzzPEG {
   private static final String OPTION_COUNT = "--count";
   private static final String OPTION_BATCH_SIZE = "--batchSize";
 
+  private static final String OPTION_SMALL = "--small";
+
   private static final String OPTION_JOIN = "--join";
 
   private static final String OPTION_OUT = "--out";
@@ -59,6 +61,8 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
     argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
+
+    argumentsParser.addOption(OPTION_SMALL, false, true, "<probability>");
 
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
 
@@ -145,7 +149,16 @@ public final class FuzzPEG {
     final Random rng = new Random();
 
     final TokenGenerator tokenGenerator = new RandomTokenGenerator(grammarGraph, rng);
-    final SelectionStrategy selectionStrategy = new RandomSelection(rng);
+
+    SelectionStrategy selectionStrategy = new RandomSelection(rng);
+    {
+      if (arguments.hasOption(OPTION_SMALL)) {
+        final double probability = arguments.getFloatOption(OPTION_SMALL);
+
+        selectionStrategy =
+            new SmallestProductionSelection(grammarGraph, selectionStrategy, probability, rng);
+      }
+    }
 
     final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner, tokenGenerator, selectionStrategy);
 
