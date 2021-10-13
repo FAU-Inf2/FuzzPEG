@@ -82,7 +82,8 @@ public final class SmallestProductionSelection implements SelectionStrategy {
 
       int count = (quantifier == Quantifier.QUANT_PLUS) ? 1 : 0;
 
-      final int adjustedWeight = (int)((1.0 - this.probability) * (element.getWeight()));
+      final int adjustedWeight =
+          (int)(Math.ceil((1.0 - this.probability) * (element.getWeight())));
       while (this.rng.nextInt(adjustedWeight + 1) != 0) {
         ++count;
       }
