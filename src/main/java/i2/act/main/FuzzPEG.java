@@ -198,9 +198,14 @@ public final class FuzzPEG {
       }
     }
 
-    System.err.format("[i] required %d attempts for %d programs\n",
-        fuzzerLoop.numberOfAttempts(),
-        fuzzerLoop.numberOfPrograms());
+    final int numberOfAttempts = fuzzerLoop.numberOfAttempts();
+    final int numberOfPrograms = fuzzerLoop.numberOfPrograms();
+
+    System.err.format("[i] required %d attempt%s for %d program%s\n",
+        numberOfAttempts,
+        (numberOfAttempts == 1) ? "" : "s",
+        numberOfPrograms,
+        (numberOfPrograms == 1) ? "" : "s");
   }
 
   private static final void usage() {
