@@ -2,7 +2,6 @@ package i2.act.fuzzer;
 
 import i2.act.fuzzer.selection.SelectionStrategy;
 import i2.act.fuzzer.tokens.TokenGenerator;
-import i2.act.fuzzer.util.TokenJoiner;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
@@ -26,7 +25,7 @@ import java.util.Map;
 public final class Fuzzer {
 
   private final GrammarGraph grammarGraph;
-  private final TokenJoiner joiner;
+  private final int maxHeight;
 
   private final Map<GrammarGraphNode<?,?>, Integer> minHeights;
   private final int minMaxHeight;
@@ -34,39 +33,34 @@ public final class Fuzzer {
   private final TokenGenerator tokenGenerator;
   private final SelectionStrategy selectionStrategy;
 
-  public Fuzzer(final GrammarGraph grammarGraph, final TokenJoiner joiner,
+  public Fuzzer(final GrammarGraph grammarGraph, final int maxHeight,
       final TokenGenerator tokenGenerator, final SelectionStrategy selectionStrategy) {
     this.grammarGraph = grammarGraph;
-    this.joiner = joiner;
+    this.maxHeight = maxHeight;
 
     this.minHeights = MinHeightComputation.computeMinHeights(grammarGraph);
 
     assert (this.minHeights.containsKey(grammarGraph.getRootNode()));
     this.minMaxHeight = this.minHeights.get(grammarGraph.getRootNode());
 
-    this.tokenGenerator = tokenGenerator;
-    this.selectionStrategy = selectionStrategy;
-  }
-
-  public final String generateProgram(final int maxHeight) {
-    final Node<?> tree = generateTree(maxHeight);
-    return this.joiner.join(tree);
-  }
-
-  public final Node<?> generateTree(final int maxHeight) {
-    if (maxHeight < this.minMaxHeight) {
+    if (this.maxHeight < this.minMaxHeight) {
       throw new RuntimeException(String.format(
           "maxHeight too small (the given grammar requires a maxHeight of at least %d)",
           this.minMaxHeight));
     }
 
-    final List<Node<?>> nodes = generate(this.grammarGraph.getRootNode(), maxHeight);
+    this.tokenGenerator = tokenGenerator;
+    this.selectionStrategy = selectionStrategy;
+  }
+
+  public final Node<?> generate() {
+    final List<Node<?>> nodes = generate(this.grammarGraph.getRootNode(), this.maxHeight);
 
     assert (nodes.size() == 1);
     return nodes.get(0);
   }
 
-  public final List<Node<?>> generate(final Choice choice, final int maxHeight) {
+  private final List<Node<?>> generate(final Choice choice, final int maxHeight) {
     if (isTerminal(choice)) {
       return listOf(createTerminalNode(choice));
     }

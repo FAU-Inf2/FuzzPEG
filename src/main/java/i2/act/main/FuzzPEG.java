@@ -11,6 +11,7 @@ import i2.act.grammargraph.properties.MinHeightComputation;
 import i2.act.packrat.Lexer;
 import i2.act.packrat.Parser;
 import i2.act.packrat.TokenStream;
+import i2.act.packrat.cst.Node;
 import i2.act.peg.ast.Grammar;
 import i2.act.peg.ast.visitors.NameAnalysis;
 import i2.act.peg.parser.PEGParser;
@@ -119,7 +120,7 @@ public final class FuzzPEG {
         final String countValue = arguments.getOption(OPTION_COUNT);
 
         if (INFINITE_PROGRAMS.equalsIgnoreCase(countValue)) {
-          count = VALUE_INFINITE_PROGRAMS;
+          count = FuzzerLoop.INFINITE;
         } else {
           count = arguments.getIntOption(OPTION_COUNT);
         }
@@ -163,13 +164,16 @@ public final class FuzzPEG {
       }
     }
 
-    final Fuzzer fuzzer = new Fuzzer(grammarGraph, joiner, tokenGenerator, selectionStrategy);
+    final Fuzzer fuzzer = new Fuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy);
 
-    for (int index = 0; index < count || count == VALUE_INFINITE_PROGRAMS; ++index) {
-      final long seed = initialSeed + index;
-      rng.setSeed(seed);
+    final FuzzerLoop fuzzerLoop = FuzzerLoop.fixedCount(
+        count, fuzzer, (loop) -> rng.setSeed(initialSeed + loop.numberOfAttempts()));
 
-      final String program = fuzzer.generateProgram(maxHeight);
+    for (final Node<?> tree : fuzzerLoop) {
+      final String program = joiner.join(tree);
+
+      final int index = fuzzerLoop.numberOfPrograms() - 1;
+      final long seed = initialSeed + fuzzerLoop.numberOfAttempts() - 1;
 
       if (testParser) {
         try {
@@ -183,6 +187,7 @@ public final class FuzzPEG {
       }
 
       if (fileNamePattern != null) {
+
         final String fileName =
             expandFileNamePattern(fileNamePattern, maxHeight, index, seed, batchSize);
 
