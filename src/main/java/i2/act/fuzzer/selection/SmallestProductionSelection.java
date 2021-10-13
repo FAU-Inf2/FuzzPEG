@@ -5,7 +5,6 @@ import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
 import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
 import i2.act.grammargraph.GrammarGraphNode;
-import i2.act.grammargraph.GrammarGraphNode.Sequence;
 import i2.act.grammargraph.properties.MinSizeComputation;
 
 import java.util.ArrayList;
@@ -41,7 +40,7 @@ public final class SmallestProductionSelection implements SelectionStrategy {
   }
 
   @Override
-  public final Sequence chooseAlternative(final List<Alternative> alternatives) {
+  public final Alternative chooseAlternative(final List<Alternative> alternatives) {
     assert (!alternatives.isEmpty());
 
     final List<Alternative> remainingAlternatives;

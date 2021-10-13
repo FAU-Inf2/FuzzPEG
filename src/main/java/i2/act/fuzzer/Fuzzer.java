@@ -8,7 +8,6 @@ import i2.act.grammargraph.GrammarGraphEdge.Element;
 import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
-import i2.act.grammargraph.GrammarGraphNode.Sequence;
 import i2.act.grammargraph.properties.MinHeightComputation;
 import i2.act.packrat.Token;
 import i2.act.packrat.cst.Node;
@@ -66,11 +65,11 @@ public final class Fuzzer {
     }
 
     final int childHeight = childHeight(choice, maxHeight);
-    final Sequence chosen = chooseAlternative(viableAlternatives(choice, childHeight));
+    final Alternative chosen = chooseAlternative(viableAlternatives(choice, childHeight));
 
     final List<Node<?>> children = new ArrayList<>();
 
-    for (final Element element : chosen.getSuccessorEdges()) {
+    for (final Element element : elementsOf(chosen)) {
       for (int count = count(element, childHeight); count-- > 0;) {
         children.addAll(generate(element.getTarget(), childHeight));
       }
@@ -101,7 +100,7 @@ public final class Fuzzer {
     return viableAlternatives;
   }
 
-  private final Sequence chooseAlternative(final List<Alternative> alternatives) {
+  private final Alternative chooseAlternative(final List<Alternative> alternatives) {
     return this.selectionStrategy.chooseAlternative(alternatives);
   }
 
@@ -128,6 +127,10 @@ public final class Fuzzer {
 
   private final List<Node<?>> listOf(final Node<?> node) {
     return Arrays.asList(node);
+  }
+
+  private final List<Element> elementsOf(final Alternative alternative) {
+    return alternative.getTarget().getSuccessorEdges();
   }
 
   private final boolean isProduction(final Choice choice) {

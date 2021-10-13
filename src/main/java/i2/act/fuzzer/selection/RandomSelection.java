@@ -3,7 +3,6 @@ package i2.act.fuzzer.selection;
 import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
 import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
-import i2.act.grammargraph.GrammarGraphNode.Sequence;
 
 import java.util.List;
 import java.util.Random;
@@ -29,12 +28,12 @@ public final class RandomSelection implements SelectionStrategy {
   }
 
   @Override
-  public final Sequence chooseAlternative(final List<Alternative> alternatives) {
+  public final Alternative chooseAlternative(final List<Alternative> alternatives) {
     assert (!alternatives.isEmpty());
 
     // handle fast case first
     if (alternatives.size() == 1) {
-      return alternatives.get(0).getTarget();
+      return alternatives.get(0);
     }
 
     // roulette wheel selection
@@ -49,7 +48,7 @@ public final class RandomSelection implements SelectionStrategy {
       weightSum += alternative.getWeight();
 
       if (weightSum >= chosen) {
-        return alternative.getTarget();
+        return alternative;
       }
     }
 
