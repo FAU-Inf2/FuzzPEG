@@ -187,7 +187,6 @@ public final class FuzzPEG {
       }
 
       if (fileNamePattern != null) {
-
         final String fileName =
             expandFileNamePattern(fileNamePattern, maxHeight, index, seed, batchSize);
 
