@@ -1,6 +1,9 @@
 package i2.act.main;
 
 import i2.act.fuzzer.*;
+import i2.act.fuzzer.selection.*;
+import i2.act.fuzzer.tokens.*;
+import i2.act.fuzzer.util.TokenJoiner;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;

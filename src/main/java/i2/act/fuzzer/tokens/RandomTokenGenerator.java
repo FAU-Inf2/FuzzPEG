@@ -1,4 +1,4 @@
-package i2.act.fuzzer;
+package i2.act.fuzzer.tokens;
 
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.packrat.Lexer;

@@ -1,4 +1,4 @@
-package i2.act.fuzzer;
+package i2.act.fuzzer.util;
 
 import i2.act.packrat.Lexer;
 import i2.act.packrat.Token;
