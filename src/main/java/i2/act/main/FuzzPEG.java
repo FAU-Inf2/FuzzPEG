@@ -1,5 +1,6 @@
 package i2.act.main;
 
+import i2.act.coverage.*;
 import i2.act.fuzzer.*;
 import i2.act.fuzzer.selection.*;
 import i2.act.fuzzer.tokens.*;
@@ -164,7 +165,10 @@ public final class FuzzPEG {
       }
     }
 
-    final Fuzzer fuzzer = new Fuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy);
+    final Coverage coverage = new AlternativeCoverage(grammarGraph);
+
+    final Fuzzer fuzzer =
+        new Fuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy, coverage);
 
     final FuzzerLoop fuzzerLoop = FuzzerLoop.fixedCount(
         count, fuzzer, (loop) -> rng.setSeed(initialSeed + loop.numberOfAttempts()));
@@ -196,6 +200,9 @@ public final class FuzzPEG {
         writer.write(program);
         writer.close();
       }
+
+      System.err.format("[i] covered %3d of %3d alternatives\n",
+          coverage.coveredCount(), coverage.totalCount());
     }
 
     final int numberOfAttempts = fuzzerLoop.numberOfAttempts();

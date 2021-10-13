@@ -1,5 +1,6 @@
 package i2.act.fuzzer;
 
+import i2.act.coverage.Coverage;
 import i2.act.fuzzer.selection.SelectionStrategy;
 import i2.act.fuzzer.tokens.TokenGenerator;
 import i2.act.grammargraph.GrammarGraph;
@@ -32,10 +33,23 @@ public final class Fuzzer {
   private final TokenGenerator tokenGenerator;
   private final SelectionStrategy selectionStrategy;
 
+  private final Coverage coverage;
+
   public Fuzzer(final GrammarGraph grammarGraph, final int maxHeight,
       final TokenGenerator tokenGenerator, final SelectionStrategy selectionStrategy) {
+    this(grammarGraph, maxHeight, tokenGenerator, selectionStrategy, null);
+  }
+
+  public Fuzzer(final GrammarGraph grammarGraph, final int maxHeight,
+      final TokenGenerator tokenGenerator, final SelectionStrategy selectionStrategy,
+      final Coverage coverage) {
     this.grammarGraph = grammarGraph;
     this.maxHeight = maxHeight;
+
+    this.tokenGenerator = tokenGenerator;
+    this.selectionStrategy = selectionStrategy;
+
+    this.coverage = coverage;
 
     this.minHeights = MinHeightComputation.computeMinHeights(grammarGraph);
 
@@ -47,9 +61,6 @@ public final class Fuzzer {
           "maxHeight too small (the given grammar requires a maxHeight of at least %d)",
           this.minMaxHeight));
     }
-
-    this.tokenGenerator = tokenGenerator;
-    this.selectionStrategy = selectionStrategy;
   }
 
   public final Node<?> generate() {
@@ -66,6 +77,8 @@ public final class Fuzzer {
 
     final int childHeight = childHeight(choice, maxHeight);
     final Alternative chosen = chooseAlternative(viableAlternatives(choice, childHeight));
+
+    track(chosen);
 
     final List<Node<?>> children = new ArrayList<>();
 
@@ -102,6 +115,12 @@ public final class Fuzzer {
 
   private final Alternative chooseAlternative(final List<Alternative> alternatives) {
     return this.selectionStrategy.chooseAlternative(alternatives);
+  }
+
+  private final void track(final Alternative chosen) {
+    if (this.coverage != null) {
+      this.coverage.covered(chosen);
+    }
   }
 
   private final int count(final Element element, final int maxHeight) {
