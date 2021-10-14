@@ -48,6 +48,8 @@ public final class FuzzPEG {
 
   private static final String OPTION_SMALL = "--small";
 
+  private static final String OPTION_ONLY_ADDITIONAL_COVERAGE = "--onlyAdditionalCoverage";
+
   private static final String OPTION_JOIN = "--join";
 
   private static final String OPTION_OUT = "--out";
@@ -68,6 +70,8 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
 
     argumentsParser.addOption(OPTION_SMALL, false, true, "<probability>");
+
+    argumentsParser.addOption(OPTION_ONLY_ADDITIONAL_COVERAGE, false);
 
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
 
@@ -170,8 +174,15 @@ public final class FuzzPEG {
     final Fuzzer fuzzer =
         new Fuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy, coverage);
 
-    final FuzzerLoop fuzzerLoop = FuzzerLoop.fixedCount(
+    FuzzerLoop fuzzerLoop;
+    {
+      fuzzerLoop = FuzzerLoop.fixedCount(
         count, fuzzer, (loop) -> rng.setSeed(initialSeed + loop.numberOfAttempts()));
+
+      if (arguments.hasOption(OPTION_ONLY_ADDITIONAL_COVERAGE)) {
+        fuzzerLoop = FuzzerLoop.onlyAdditionalCoverage(coverage, fuzzerLoop);
+      }
+    }
 
     for (final Node<?> tree : fuzzerLoop) {
       final String program = joiner.join(tree);
