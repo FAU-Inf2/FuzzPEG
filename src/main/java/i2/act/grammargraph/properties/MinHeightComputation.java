@@ -12,18 +12,60 @@ import java.util.Map;
 
 public final class MinHeightComputation extends PropertyComputation<Integer> {
 
+  public static enum Mode {
+    SINGLE_ALTERNATIVE,
+    ALL_ALTERNATIVES;
+  }
+
   private static final Integer UNKNOWN = Integer.MAX_VALUE;
 
   public static final Map<GrammarGraphNode<?,?>, Integer> computeMinHeights(
       final GrammarGraph grammarGraph) {
-    final MinHeightComputation computation = new MinHeightComputation();
-    return computation.compute(grammarGraph);
+    return computeMinHeights(grammarGraph, Mode.SINGLE_ALTERNATIVE);
+  }
+
+  public static final Map<GrammarGraphNode<?,?>, Integer> computeMinHeights(
+      final GrammarGraph grammarGraph, final Mode mode) {
+    final MinHeightComputation computation = new MinHeightComputation(mode);
+    final Map<GrammarGraphNode<?,?>, Integer> minHeights = computation.compute(grammarGraph);
+
+    if (mode == Mode.ALL_ALTERNATIVES) {
+      for (final GrammarGraphNode<?,?> node : minHeights.keySet()) {
+        if (!(node instanceof Choice)) {
+          continue;
+        }
+
+        final Choice choice = (Choice) node;
+
+        int maxMinHeight = 0;
+        for (final Alternative alternative : choice.getSuccessorEdges()) {
+          assert (minHeights.containsKey(alternative.getTarget()));
+          final int minHeightAlternative = minHeights.get(alternative.getTarget());
+
+          if (minHeightAlternative > maxMinHeight) {
+            maxMinHeight = minHeightAlternative;
+          }
+        }
+
+        if (requiresNode(choice)) {
+          maxMinHeight += 1;
+        }
+
+        minHeights.put(choice, maxMinHeight);
+      }
+    }
+
+    return minHeights;
   }
 
   // -----------------------------------------------------------------------------------------------
 
-  private MinHeightComputation() {
+  private MinHeightComputation(final Mode mode) {
     super(PropertyComputation.Direction.BACKWARDS);
+  }
+
+  private static final boolean requiresNode(final Choice choice) {
+    return choice.hasGrammarSymbol() && choice.getGrammarSymbol().getProduction() != null;
   }
 
   @Override
@@ -46,11 +88,11 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
       return UNKNOWN;
     }
 
-    if (!node.hasGrammarSymbol() || node.getGrammarSymbol().getProduction() == null) {
+    if (requiresNode(node)) {
+      return in + 1;
+    } else {
       // helper node
       return in;
-    } else {
-      return in + 1;
     }
   }
 

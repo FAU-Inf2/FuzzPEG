@@ -10,7 +10,8 @@ public final class MinMaxHeightComputation {
 
   public static final int computeMinMaxHeight(final GrammarGraph grammarGraph) {
     final Map<GrammarGraphNode<?, ?>, Integer> minHeights =
-        MinHeightComputation.computeMinHeights(grammarGraph);
+        MinHeightComputation.computeMinHeights(
+            grammarGraph, MinHeightComputation.Mode.ALL_ALTERNATIVES);
 
     final Map<GrammarGraphNode<?, ?>, Integer> minDepths =
         MinDepthComputation.computeMinDepths(grammarGraph);
