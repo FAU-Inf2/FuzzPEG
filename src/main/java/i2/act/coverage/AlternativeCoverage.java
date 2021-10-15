@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public final class AlternativeCoverage implements Coverage {
+public final class AlternativeCoverage {
 
   private final Set<Alternative> allAlternatives;
 
@@ -31,7 +31,6 @@ public final class AlternativeCoverage implements Coverage {
         .collect(Collectors.toSet());
   }
 
-  @Override
   public final void covered(final Alternative alternative) {
     this.covered.add(alternative);
   }
@@ -40,22 +39,18 @@ public final class AlternativeCoverage implements Coverage {
     return this.covered.contains(alternative);
   }
 
-  @Override
   public final int totalCount() {
     return this.allAlternatives.size();
   }
 
-  @Override
   public final int coveredCount() {
     return this.covered.size();
   }
 
-  @Override
   public final int missingCount() {
     return totalCount() - coveredCount();
   }
 
-  @Override
   public final boolean isFullyCovered() {
     return missingCount() == 0;
   }

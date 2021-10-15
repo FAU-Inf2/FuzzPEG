@@ -1,6 +1,6 @@
 package i2.act.fuzzer;
 
-import i2.act.coverage.Coverage;
+import i2.act.coverage.AlternativeCoverage;
 import i2.act.fuzzer.selection.SelectionStrategy;
 import i2.act.fuzzer.tokens.TokenGenerator;
 import i2.act.grammargraph.GrammarGraph;
@@ -33,7 +33,7 @@ public final class Fuzzer {
   private final TokenGenerator tokenGenerator;
   private final SelectionStrategy selectionStrategy;
 
-  private final Coverage coverage;
+  private final AlternativeCoverage coverage;
 
   public Fuzzer(final GrammarGraph grammarGraph, final int maxHeight,
       final TokenGenerator tokenGenerator, final SelectionStrategy selectionStrategy) {
@@ -42,7 +42,7 @@ public final class Fuzzer {
 
   public Fuzzer(final GrammarGraph grammarGraph, final int maxHeight,
       final TokenGenerator tokenGenerator, final SelectionStrategy selectionStrategy,
-      final Coverage coverage) {
+      final AlternativeCoverage coverage) {
     this.grammarGraph = grammarGraph;
     this.maxHeight = maxHeight;
 

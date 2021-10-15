@@ -1,6 +1,6 @@
 package i2.act.fuzzer;
 
-import i2.act.coverage.Coverage;
+import i2.act.coverage.AlternativeCoverage;
 import i2.act.packrat.cst.Node;
 
 import java.util.Iterator;
@@ -36,7 +36,7 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
 
   // ~~ only additional coverage ~~
 
-  public static final FuzzerLoop onlyAdditionalCoverage(final Coverage coverage,
+  public static final FuzzerLoop onlyAdditionalCoverage(final AlternativeCoverage coverage,
       final FuzzerLoop baseLoop) {
     return new FilterFuzzerLoop(baseLoop) {
 

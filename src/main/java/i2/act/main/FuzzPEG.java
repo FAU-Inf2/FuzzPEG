@@ -1,6 +1,6 @@
 package i2.act.main;
 
-import i2.act.coverage.*;
+import i2.act.coverage.AlternativeCoverage;
 import i2.act.fuzzer.*;
 import i2.act.fuzzer.selection.*;
 import i2.act.fuzzer.tokens.*;
@@ -201,7 +201,7 @@ public final class FuzzPEG {
       }
     }
 
-    final Coverage coverage = new AlternativeCoverage(grammarGraph);
+    final AlternativeCoverage coverage = new AlternativeCoverage(grammarGraph);
 
     final Fuzzer fuzzer =
         new Fuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy, coverage);
