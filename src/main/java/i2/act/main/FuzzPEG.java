@@ -54,7 +54,7 @@ public final class FuzzPEG {
 
   private static final String OPTION_OUT = "--out";
 
-  private static final String OPTION_TEST_PARSER = "--testParser";
+  private static final String OPTION_TEST_PEG = "--testPEG";
 
   static {
     argumentsParser = new ProgramArgumentsParser();
@@ -77,7 +77,7 @@ public final class FuzzPEG {
 
     argumentsParser.addOption(OPTION_OUT, false, true, "<file name pattern>");
 
-    argumentsParser.addOption(OPTION_TEST_PARSER, false);
+    argumentsParser.addOption(OPTION_TEST_PEG, false);
   }
 
   public static final void main(final String[] args) {
@@ -142,11 +142,11 @@ public final class FuzzPEG {
 
     final String fileNamePattern = arguments.getOptionOr(OPTION_OUT, null);
 
-    final boolean testParser = arguments.hasOption(OPTION_TEST_PARSER);
+    final boolean testPEG = arguments.hasOption(OPTION_TEST_PEG);
     final Lexer lexer;
     final Parser parser;
     {
-      if (testParser) {
+      if (testPEG) {
         lexer = Lexer.forGrammar(grammar);
         parser = Parser.fromGrammar(grammar);
       } else {
@@ -190,7 +190,7 @@ public final class FuzzPEG {
       final int index = fuzzerLoop.numberOfPrograms() - 1;
       final long seed = initialSeed + fuzzerLoop.numberOfAttempts() - 1;
 
-      if (testParser) {
+      if (testPEG) {
         try {
           final TokenStream tokens = lexer.lex(program);
           parser.parse(tokens);
