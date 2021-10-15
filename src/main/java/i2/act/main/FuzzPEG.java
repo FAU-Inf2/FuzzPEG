@@ -63,7 +63,7 @@ public final class FuzzPEG {
     argumentsParser = new ProgramArgumentsParser();
 
     argumentsParser.addOption(OPTION_GRAMMAR, true, true, "<path to grammar>");
-    argumentsParser.addOption(OPTION_MAX_HEIGHT, true, true, "<max. height>");
+    argumentsParser.addOption(OPTION_MAX_HEIGHT, false, true, "<max. height>");
 
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
@@ -140,10 +140,9 @@ public final class FuzzPEG {
     }
     final int batchSize = arguments.getIntOptionOr(OPTION_BATCH_SIZE, DEFAULT_BATCH_SIZE);
 
-    final int maxHeight = arguments.getIntOption(OPTION_MAX_HEIGHT);
+    final int minMaxHeight = MinMaxHeightComputation.computeMinMaxHeight(grammarGraph);
+    final int maxHeight = arguments.getIntOptionOr(OPTION_MAX_HEIGHT, minMaxHeight);
     {
-      final int minMaxHeight = MinMaxHeightComputation.computeMinMaxHeight(grammarGraph);
-
       if (maxHeight < minMaxHeight) {
         System.err.format(
             "[!] WARNING: 'maxHeight' of %d does not suffice to cover all nodes "
