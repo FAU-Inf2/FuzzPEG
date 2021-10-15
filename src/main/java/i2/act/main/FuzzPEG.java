@@ -24,6 +24,8 @@ import i2.act.util.SafeWriter;
 import i2.act.util.options.ProgramArguments;
 import i2.act.util.options.ProgramArgumentsParser;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -42,7 +44,6 @@ public final class FuzzPEG {
   private static final String OPTION_MAX_HEIGHT = "--maxHeight";
 
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
-  private static final String OPTION_PRINT_REACHABLE = "--printReachable";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
   private static final String OPTION_PRINT_MIN_DEPTHS = "--printMinDepths";
 
@@ -67,7 +68,6 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_MAX_HEIGHT, true, true, "<max. height>");
 
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
-    argumentsParser.addOption(OPTION_PRINT_REACHABLE, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_DEPTHS, false);
 
@@ -106,12 +106,10 @@ public final class FuzzPEG {
       grammarGraph.printAsDot();
     }
 
-    if (arguments.hasOption(OPTION_PRINT_REACHABLE)) {
-      final Map<GrammarGraphNode<?,?>, Boolean> reachable =
-          ReachableComputation.computeReachable(grammarGraph, true);
+    final Map<GrammarGraphNode<?,?>, Boolean> reachable =
+        ReachableComputation.computeReachable(grammarGraph, true);
 
-      printComputationResults(reachable);
-    }
+    printUnreachableNodes(reachable);
 
     if (arguments.hasOption(OPTION_PRINT_MIN_HEIGHTS)) {
       final Map<GrammarGraphNode<?,?>, Integer> minHeights =
@@ -282,6 +280,26 @@ public final class FuzzPEG {
           System.err.format("%30s: %s\n", symbol, result);
         }
       }
+    }
+  }
+
+  private static final void printUnreachableNodes(
+      final Map<GrammarGraphNode<?,?>, Boolean> reachable) {
+    final List<Symbol<?>> unreachableSymbols = new ArrayList<>();
+
+    for (final Map.Entry<GrammarGraphNode<?,?>, Boolean> entry : reachable.entrySet()) {
+      final GrammarGraphNode<?,?> node = entry.getKey();
+      final Boolean isReachable = entry.getValue();
+
+      if ((node instanceof Choice) && !isReachable) {
+        final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
+        unreachableSymbols.add(symbol);
+      }
+    }
+
+    if (!unreachableSymbols.isEmpty()) {
+      System.err.format("[!] WARNING: grammar graph contains unreachable nodes: %s\n",
+          unreachableSymbols);
     }
   }
 
