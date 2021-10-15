@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public final class FuzzPEG {
 
@@ -46,6 +47,7 @@ public final class FuzzPEG {
   private static final String OPTION_PRINT_MIN_HEIGHTS_ALL = "--printMinHeightsAll";
   private static final String OPTION_PRINT_MIN_DEPTHS = "--printMinDepths";
   private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
+  private static final String OPTION_PRINT_REACHABLE_CHOICES = "--printReachableChoices";
 
   private static final String OPTION_SEED = "--seed";
   private static final String OPTION_COUNT = "--count";
@@ -73,6 +75,7 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS_ALL, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_DEPTHS, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_MAX_HEIGHT, false);
+    argumentsParser.addOption(OPTION_PRINT_REACHABLE_CHOICES, false);
 
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
@@ -134,6 +137,30 @@ public final class FuzzPEG {
           MinDepthComputation.computeMinDepths(grammarGraph);
 
       printComputationResults(minDepths);
+    }
+
+    if (arguments.hasOption(OPTION_PRINT_REACHABLE_CHOICES)) {
+      final Map<GrammarGraphNode<?,?>, Map<Choice, Integer>> reachableChoices =
+          ReachableChoicesComputation.computeReachableChoices(grammarGraph);
+
+      for (final Map.Entry<GrammarGraphNode<?,?>, Map<Choice, Integer>> entry
+          : reachableChoices.entrySet()) {
+        final GrammarGraphNode<?,?> node = entry.getKey();
+        final Map<Choice, Integer> result = entry.getValue();
+
+        if (node instanceof Choice) {
+          final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
+
+          final String serialized = result.keySet().stream()
+              .map((choice) -> String.format("(%s, %d)",
+                  choice.getGrammarSymbol(), result.get(choice)))
+              .collect(Collectors.joining(", "));
+
+          if (symbol != null) {
+            System.err.format("-----[ %s ]-----\n[%s]\n\n", symbol, serialized);
+          }
+        }
+      }
     }
 
     final long initialSeed = arguments.getLongOptionOr(OPTION_SEED, System.currentTimeMillis());
