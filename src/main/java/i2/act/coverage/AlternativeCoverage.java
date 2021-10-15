@@ -4,9 +4,12 @@ import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
+import i2.act.grammargraph.properties.ReachableComputation;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -23,12 +26,28 @@ public final class AlternativeCoverage {
   }
 
   private final Set<Alternative> determineAllAlternatives(final GrammarGraph grammarGraph) {
-    return StreamSupport.stream(grammarGraph.spliterator(), false)
+    final Set<Alternative> allAlternatives = StreamSupport.stream(grammarGraph.spliterator(), false)
         .filter(Choice.class::isInstance)
         .map(Choice.class::cast)
         .map(GrammarGraphNode::getSuccessorEdges)
         .flatMap(List::stream)
         .collect(Collectors.toSet());
+
+    final Map<GrammarGraphNode<?,?>, Boolean> reachable =
+        ReachableComputation.computeReachable(grammarGraph, false);
+
+    final Iterator<Alternative> allAlternativesIterator = allAlternatives.iterator();
+    while (allAlternativesIterator.hasNext()) {
+      final Alternative alternative = allAlternativesIterator.next();
+      final Choice choice = alternative.getSource();
+
+      assert (reachable.containsKey(choice));
+      if (!reachable.get(choice)) {
+        allAlternativesIterator.remove();
+      }
+    }
+
+    return allAlternatives;
   }
 
   public final void covered(final Alternative alternative) {
