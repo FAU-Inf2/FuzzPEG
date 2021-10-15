@@ -83,7 +83,7 @@ public final class Fuzzer {
     final List<Node<?>> children = new ArrayList<>();
 
     for (final Element element : elementsOf(chosen)) {
-      for (int count = count(element, childHeight); count-- > 0;) {
+      for (int count = count(element, childHeight); count > 0; --count) {
         children.addAll(generate(element.getTarget(), childHeight));
       }
     }
