@@ -26,7 +26,7 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
 
   public static final Map<GrammarGraphNode<?,?>, Integer> computeMinHeights(
       final GrammarGraph grammarGraph, final Mode mode) {
-    final MinHeightComputation computation = new MinHeightComputation(mode);
+    final MinHeightComputation computation = new MinHeightComputation();
     final Map<GrammarGraphNode<?,?>, Integer> minHeights = computation.compute(grammarGraph);
 
     if (mode == Mode.ALL_ALTERNATIVES) {
@@ -60,7 +60,7 @@ public final class MinHeightComputation extends PropertyComputation<Integer> {
 
   // -----------------------------------------------------------------------------------------------
 
-  private MinHeightComputation(final Mode mode) {
+  private MinHeightComputation() {
     super(PropertyComputation.Direction.BACKWARDS);
   }
 
