@@ -44,6 +44,7 @@ public final class FuzzPEG {
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
   private static final String OPTION_PRINT_MIN_DEPTHS = "--printMinDepths";
+  private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
 
   private static final String OPTION_SEED = "--seed";
   private static final String OPTION_COUNT = "--count";
@@ -68,6 +69,7 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_DEPTHS, false);
+    argumentsParser.addOption(OPTION_PRINT_MIN_MAX_HEIGHT, false);
 
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
@@ -141,6 +143,13 @@ public final class FuzzPEG {
     final int batchSize = arguments.getIntOptionOr(OPTION_BATCH_SIZE, DEFAULT_BATCH_SIZE);
 
     final int minMaxHeight = MinMaxHeightComputation.computeMinMaxHeight(grammarGraph);
+
+    if (arguments.hasOption(OPTION_PRINT_MIN_MAX_HEIGHT)) {
+      System.err.format(
+          "[i] grammar requires a 'maxHeight' of at least %d to cover all nodes\n",
+          minMaxHeight);
+    }
+
     final int maxHeight = arguments.getIntOptionOr(OPTION_MAX_HEIGHT, minMaxHeight);
     {
       if (maxHeight < minMaxHeight) {
