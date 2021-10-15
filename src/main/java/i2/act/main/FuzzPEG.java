@@ -8,9 +8,7 @@ import i2.act.fuzzer.util.TokenJoiner;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
-import i2.act.grammargraph.properties.MinDepthComputation;
-import i2.act.grammargraph.properties.MinHeightComputation;
-import i2.act.grammargraph.properties.ReachableComputation;
+import i2.act.grammargraph.properties.*;
 import i2.act.packrat.Lexer;
 import i2.act.packrat.Parser;
 import i2.act.packrat.TokenStream;
@@ -143,6 +141,16 @@ public final class FuzzPEG {
     final int batchSize = arguments.getIntOptionOr(OPTION_BATCH_SIZE, DEFAULT_BATCH_SIZE);
 
     final int maxHeight = arguments.getIntOption(OPTION_MAX_HEIGHT);
+    {
+      final int minMaxHeight = MinMaxHeightComputation.computeMinMaxHeight(grammarGraph);
+
+      if (maxHeight < minMaxHeight) {
+        System.err.format(
+            "[!] WARNING: 'maxHeight' of %d does not suffice to cover all nodes "
+            + "(requires a 'maxHeight' of at least %d)\n",
+            maxHeight, minMaxHeight);
+      }
+    }
 
     final String separator = arguments.getOptionOr(OPTION_JOIN, " ");
     final TokenJoiner joiner = new TokenJoiner(grammar, separator);
