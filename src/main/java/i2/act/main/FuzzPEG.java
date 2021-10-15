@@ -8,6 +8,7 @@ import i2.act.fuzzer.util.TokenJoiner;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
+import i2.act.grammargraph.properties.MinDepthComputation;
 import i2.act.grammargraph.properties.MinHeightComputation;
 import i2.act.packrat.Lexer;
 import i2.act.packrat.Parser;
@@ -41,6 +42,7 @@ public final class FuzzPEG {
 
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
+  private static final String OPTION_PRINT_MIN_DEPTHS = "--printMinDepths";
 
   private static final String OPTION_SEED = "--seed";
   private static final String OPTION_COUNT = "--count";
@@ -64,6 +66,7 @@ public final class FuzzPEG {
 
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
+    argumentsParser.addOption(OPTION_PRINT_MIN_DEPTHS, false);
 
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
@@ -104,18 +107,14 @@ public final class FuzzPEG {
       final Map<GrammarGraphNode<?,?>, Integer> minHeights =
           MinHeightComputation.computeMinHeights(grammarGraph);
 
-      for (final Map.Entry<GrammarGraphNode<?,?>, Integer> entry : minHeights.entrySet()) {
-        final GrammarGraphNode<?,?> node = entry.getKey();
-        final Integer minHeight = entry.getValue();
+      printComputationResults(minHeights);
+    }
 
-        if (node instanceof Choice) {
-          final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
+    if (arguments.hasOption(OPTION_PRINT_MIN_DEPTHS)) {
+      final Map<GrammarGraphNode<?,?>, Integer> minDepths =
+          MinDepthComputation.computeMinDepths(grammarGraph);
 
-          if (symbol != null) {
-            System.out.format("%30s => %d\n", symbol, minHeight);
-          }
-        }
-      }
+      printComputationResults(minDepths);
     }
 
     final long initialSeed = arguments.getLongOptionOr(OPTION_SEED, System.currentTimeMillis());
@@ -259,6 +258,21 @@ public final class FuzzPEG {
         .replaceAll(Pattern.quote("#{INDEX}"), Matcher.quoteReplacement("" + index))
         .replaceAll(Pattern.quote("#{SEED}"), Matcher.quoteReplacement("" + seed))
         .replaceAll(Pattern.quote("#{BATCH}"), Matcher.quoteReplacement("" + (index / batchSize)));
+  }
+
+  private static final void printComputationResults(final Map<GrammarGraphNode<?,?>, ?> results) {
+    for (final Map.Entry<GrammarGraphNode<?,?>, ?> entry : results.entrySet()) {
+      final GrammarGraphNode<?,?> node = entry.getKey();
+      final Object result = entry.getValue();
+
+      if (node instanceof Choice) {
+        final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
+
+        if (symbol != null) {
+          System.err.format("%30s: %s\n", symbol, result);
+        }
+      }
+    }
   }
 
 }
