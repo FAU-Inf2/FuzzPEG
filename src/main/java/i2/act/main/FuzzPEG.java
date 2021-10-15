@@ -10,6 +10,7 @@ import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
 import i2.act.grammargraph.properties.MinDepthComputation;
 import i2.act.grammargraph.properties.MinHeightComputation;
+import i2.act.grammargraph.properties.ReachableComputation;
 import i2.act.packrat.Lexer;
 import i2.act.packrat.Parser;
 import i2.act.packrat.TokenStream;
@@ -41,6 +42,7 @@ public final class FuzzPEG {
   private static final String OPTION_MAX_HEIGHT = "--maxHeight";
 
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
+  private static final String OPTION_PRINT_REACHABLE = "--printReachable";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
   private static final String OPTION_PRINT_MIN_DEPTHS = "--printMinDepths";
 
@@ -65,6 +67,7 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_MAX_HEIGHT, true, true, "<max. height>");
 
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
+    argumentsParser.addOption(OPTION_PRINT_REACHABLE, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_DEPTHS, false);
 
@@ -101,6 +104,13 @@ public final class FuzzPEG {
 
     if (arguments.hasOption(OPTION_PRINT_GRAMMAR_GRAPH)) {
       grammarGraph.printAsDot();
+    }
+
+    if (arguments.hasOption(OPTION_PRINT_REACHABLE)) {
+      final Map<GrammarGraphNode<?,?>, Boolean> reachable =
+          ReachableComputation.computeReachable(grammarGraph, true);
+
+      printComputationResults(reachable);
     }
 
     if (arguments.hasOption(OPTION_PRINT_MIN_HEIGHTS)) {
