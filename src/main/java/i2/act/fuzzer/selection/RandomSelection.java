@@ -28,7 +28,8 @@ public final class RandomSelection implements SelectionStrategy {
   }
 
   @Override
-  public final Alternative chooseAlternative(final List<Alternative> alternatives) {
+  public final Alternative chooseAlternative(final List<Alternative> alternatives,
+      final int maxHeight) {
     assert (!alternatives.isEmpty());
 
     // handle fast case first
@@ -57,7 +58,7 @@ public final class RandomSelection implements SelectionStrategy {
   }
 
   @Override
-  public final int chooseCount(final Element element) {
+  public final int chooseCount(final Element element, final int maxHeight) {
     final Quantifier quantifier = element.getQuantifier();
 
     if (quantifier == Quantifier.QUANT_OPTIONAL) {

@@ -54,6 +54,7 @@ public final class FuzzPEG {
   private static final String OPTION_BATCH_SIZE = "--batchSize";
 
   private static final String OPTION_PREFER_UNCOVERED = "--preferUncovered";
+  private static final String OPTION_PREFER_REACHES_UNCOVERED = "--preferReachesUncovered";
   private static final String OPTION_SMALL = "--small";
 
   private static final String OPTION_ONLY_ADDITIONAL_COVERAGE = "--onlyAdditionalCoverage";
@@ -82,6 +83,7 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
 
     argumentsParser.addOption(OPTION_PREFER_UNCOVERED, false);
+    argumentsParser.addOption(OPTION_PREFER_REACHES_UNCOVERED, false);
     argumentsParser.addOption(OPTION_SMALL, false, true, "<probability>");
 
     argumentsParser.addOption(OPTION_ONLY_ADDITIONAL_COVERAGE, false);
@@ -239,13 +241,20 @@ public final class FuzzPEG {
         }
       }
 
-      if (arguments.hasOption(OPTION_PREFER_UNCOVERED)) {
-        final SelectionStrategy strategyCovered = randomSelection;
-        final SelectionStrategy strategyUncovered =
+      if (arguments.hasOption(OPTION_PREFER_REACHES_UNCOVERED)) {
+        final SelectionStrategy strategyCovered =
             (smallestProductionSelection == null) ? randomSelection : smallestProductionSelection;
+        final SelectionStrategy strategyUncovered = randomSelection;
+
+        selectionStrategy = new PreferReachesUncoveredStrategy(
+            grammarGraph, coverage, strategyUncovered, strategyCovered);
+      } else if (arguments.hasOption(OPTION_PREFER_UNCOVERED)) {
+        final SelectionStrategy strategyCovered =
+            (smallestProductionSelection == null) ? randomSelection : smallestProductionSelection;
+        final SelectionStrategy strategyUncovered = randomSelection;
 
         selectionStrategy =
-            new PreferUncoveredStrategy(coverage, strategyCovered, strategyUncovered);
+            new PreferUncoveredStrategy(coverage, strategyUncovered, strategyCovered);
       } else {
         selectionStrategy =
             (smallestProductionSelection == null) ? randomSelection : smallestProductionSelection;

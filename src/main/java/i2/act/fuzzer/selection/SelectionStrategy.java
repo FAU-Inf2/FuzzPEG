@@ -7,8 +7,9 @@ import java.util.List;
 
 public interface SelectionStrategy {
 
-  public abstract Alternative chooseAlternative(final List<Alternative> alternatives);
+  public abstract Alternative chooseAlternative(final List<Alternative> alternatives,
+      final int maxHeight);
 
-  public abstract int chooseCount(final Element element);
+  public abstract int chooseCount(final Element element, final int maxHeight);
 
 }

@@ -21,21 +21,22 @@ public final class PreferUncoveredStrategy implements SelectionStrategy {
   }
 
   @Override
-  public final Alternative chooseAlternative(final List<Alternative> alternatives) {
+  public final Alternative chooseAlternative(final List<Alternative> alternatives,
+      final int maxHeight) {
     final List<Alternative> uncoveredAlternatives = alternatives.stream()
         .filter((alternative) -> !this.coverage.isCovered(alternative))
         .collect(Collectors.toList());
 
     if (uncoveredAlternatives.isEmpty()) {
-      return this.strategyCovered.chooseAlternative(alternatives);
+      return this.strategyCovered.chooseAlternative(alternatives, maxHeight);
     } else {
-      return this.strategyUncovered.chooseAlternative(uncoveredAlternatives);
+      return this.strategyUncovered.chooseAlternative(uncoveredAlternatives, maxHeight);
     }
   }
 
   @Override
-  public final int chooseCount(final Element element) {
-    return this.strategyCovered.chooseCount(element);
+  public final int chooseCount(final Element element, final int maxHeight) {
+    return this.strategyCovered.chooseCount(element, maxHeight);
   }
 
 }

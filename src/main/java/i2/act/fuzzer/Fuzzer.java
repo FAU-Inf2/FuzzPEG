@@ -76,7 +76,8 @@ public final class Fuzzer {
     }
 
     final int childHeight = childHeight(choice, maxHeight);
-    final Alternative chosen = chooseAlternative(viableAlternatives(choice, childHeight));
+    final Alternative chosen =
+        chooseAlternative(viableAlternatives(choice, childHeight), childHeight);
 
     track(chosen);
 
@@ -113,8 +114,9 @@ public final class Fuzzer {
     return viableAlternatives;
   }
 
-  private final Alternative chooseAlternative(final List<Alternative> alternatives) {
-    return this.selectionStrategy.chooseAlternative(alternatives);
+  private final Alternative chooseAlternative(final List<Alternative> alternatives,
+      final int maxHeight) {
+    return this.selectionStrategy.chooseAlternative(alternatives, maxHeight);
   }
 
   private final void track(final Alternative chosen) {
@@ -137,7 +139,7 @@ public final class Fuzzer {
       return 1;
     }
 
-    return this.selectionStrategy.chooseCount(element);
+    return this.selectionStrategy.chooseCount(element, maxHeight);
   }
 
   private final int childHeight(final Choice choice, final int maxHeight) {
