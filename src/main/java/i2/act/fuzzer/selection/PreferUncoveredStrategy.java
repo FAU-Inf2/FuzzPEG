@@ -39,4 +39,10 @@ public final class PreferUncoveredStrategy implements SelectionStrategy {
     return this.strategyCovered.chooseCount(element, maxHeight);
   }
 
+  @Override
+  public final boolean generateMoreElements(final Element element, final int count,
+      final int maxHeight) {
+    return this.strategyCovered.generateMoreElements(element, count, maxHeight);
+  }
+
 }

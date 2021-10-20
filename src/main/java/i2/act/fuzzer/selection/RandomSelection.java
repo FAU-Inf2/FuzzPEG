@@ -76,4 +76,10 @@ public final class RandomSelection implements SelectionStrategy {
     }
   }
 
+  @Override
+  public final boolean generateMoreElements(final Element element, final int count,
+      final int maxHeight) {
+    return this.rng.nextInt(element.getWeight() + 1) != 0;
+  }
+
 }

@@ -142,18 +142,20 @@ public final class FuzzPEG {
     }
 
     if (arguments.hasOption(OPTION_PRINT_REACHABLE_CHOICES)) {
-      final Map<GrammarGraphNode<?,?>, Map<Choice, Integer>> reachableChoices =
-          ReachableChoicesComputation.computeReachableChoices(grammarGraph);
+      final Map<GrammarGraphNode<?,?>, Map<GrammarGraphNode<?,?>, Integer>> reachableNodes =
+          ReachableNodesComputation.computeReachableNodes(grammarGraph);
 
-      for (final Map.Entry<GrammarGraphNode<?,?>, Map<Choice, Integer>> entry
-          : reachableChoices.entrySet()) {
+      for (final Map.Entry<GrammarGraphNode<?,?>, Map<GrammarGraphNode<?,?>, Integer>> entry
+          : reachableNodes.entrySet()) {
         final GrammarGraphNode<?,?> node = entry.getKey();
-        final Map<Choice, Integer> result = entry.getValue();
+        final Map<GrammarGraphNode<?,?>, Integer> result = entry.getValue();
 
         if (node instanceof Choice) {
           final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
 
           final String serialized = result.keySet().stream()
+              .filter(Choice.class::isInstance)
+              .map(Choice.class::cast)
               .map((choice) -> String.format("(%s, %d)",
                   choice.getGrammarSymbol(), result.get(choice)))
               .collect(Collectors.joining(", "));
@@ -166,6 +168,8 @@ public final class FuzzPEG {
     }
 
     final long initialSeed = arguments.getLongOptionOr(OPTION_SEED, System.currentTimeMillis());
+    System.err.format("[i] initial seed: %d\n", initialSeed);
+
     final int count;
     {
       if (arguments.hasOption(OPTION_COUNT)) {

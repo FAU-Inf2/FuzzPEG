@@ -84,7 +84,7 @@ public final class Fuzzer {
     final List<Node<?>> children = new ArrayList<>();
 
     for (final Element element : elementsOf(chosen)) {
-      for (int count = count(element, childHeight); count > 0; --count) {
+      for (int count = 0; generateMoreElements(element, count, childHeight); ++count) {
         children.addAll(generate(element.getTarget(), childHeight));
       }
     }
@@ -100,12 +100,12 @@ public final class Fuzzer {
     return choice.getGrammarSymbol() instanceof LexerSymbol;
   }
 
-  private final List<Alternative> viableAlternatives(final Choice choice, final int maxHeight) {
+  private final List<Alternative> viableAlternatives(final Choice choice, final int childHeight) {
     final List<Alternative> viableAlternatives = new ArrayList<>();
 
     for (final Alternative alternative : choice.getSuccessorEdges()) {
       assert (this.minHeights.containsKey(alternative.getTarget()));
-      if (this.minHeights.get(alternative.getTarget()) <= maxHeight) {
+      if (this.minHeights.get(alternative.getTarget()) <= childHeight) {
         viableAlternatives.add(alternative);
       }
     }
@@ -115,8 +115,8 @@ public final class Fuzzer {
   }
 
   private final Alternative chooseAlternative(final List<Alternative> alternatives,
-      final int maxHeight) {
-    return this.selectionStrategy.chooseAlternative(alternatives, maxHeight);
+      final int childHeight) {
+    return this.selectionStrategy.chooseAlternative(alternatives, childHeight);
   }
 
   private final void track(final Alternative chosen) {
@@ -125,21 +125,36 @@ public final class Fuzzer {
     }
   }
 
-  private final int count(final Element element, final int maxHeight) {
+  private final boolean generateMoreElements(final Element element, final int count,
+      final int childHeight) {
     final Quantifier quantifier = element.getQuantifier();
 
     assert (this.minHeights.containsKey(element.getTarget()));
-    if (this.minHeights.get(element.getTarget()) > maxHeight) {
+    if (this.minHeights.get(element.getTarget()) > childHeight) {
       assert (quantifier != Quantifier.QUANT_NONE
           && quantifier != Quantifier.QUANT_PLUS);
-      return 0;
+      assert (count == 0);
+      return false;
     }
 
     if (quantifier == Quantifier.QUANT_NONE) {
-      return 1;
+      if (count == 0) {
+        return true;
+      } else {
+        assert (count == 1);
+        return false;
+      }
     }
 
-    return this.selectionStrategy.chooseCount(element, maxHeight);
+    if (quantifier == Quantifier.QUANT_PLUS && count == 0) {
+      return true;
+    }
+
+    if (quantifier == Quantifier.QUANT_OPTIONAL && count == 1) {
+      return false;
+    }
+
+    return this.selectionStrategy.generateMoreElements(element, count, childHeight);
   }
 
   private final int childHeight(final Choice choice, final int maxHeight) {

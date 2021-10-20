@@ -93,6 +93,15 @@ public final class SmallestProductionSelection implements SelectionStrategy {
     }
   }
 
+  @Override
+  public final boolean generateMoreElements(final Element element, final int count,
+      final int maxHeight) {
+    final int adjustedWeight =
+        (int)(Math.ceil((1.0 - this.probability) * (element.getWeight())));
+
+    return this.rng.nextInt(adjustedWeight + 1) != 0;
+  }
+
   private final boolean chooseSmall() {
     return this.rng.nextDouble() < this.probability;
   }

@@ -8,7 +8,7 @@ import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
 import i2.act.grammargraph.GrammarGraphNode.Sequence;
 import i2.act.grammargraph.properties.MinHeightComputation;
-import i2.act.grammargraph.properties.ReachableChoicesComputation;
+import i2.act.grammargraph.properties.ReachableNodesComputation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.Map;
 
 public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
 
-  private final Map<GrammarGraphNode<?,?>, Map<Choice, Integer>> reachableChoices;
+  private final Map<GrammarGraphNode<?,?>, Map<GrammarGraphNode<?,?>, Integer>> reachableNodes;
   private final Map<GrammarGraphNode<?,?>, Integer> minHeights;
 
   private final AlternativeCoverage coverage;
@@ -26,16 +26,22 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
   public PreferReachesUncoveredStrategy(final GrammarGraph grammarGraph,
       final AlternativeCoverage coverage,
       final SelectionStrategy strategyUncovered, final SelectionStrategy strategyCovered) {
-    this.reachableChoices = ReachableChoicesComputation.computeReachableChoices(grammarGraph);
+    this.reachableNodes = ReachableNodesComputation.computeReachableNodes(grammarGraph);
     this.minHeights = MinHeightComputation.computeMinHeights(grammarGraph);
     this.coverage = coverage;
     this.strategyUncovered = strategyUncovered;
     this.strategyCovered = strategyCovered;
   }
 
+  private static final boolean requiresNode(final Choice choice) {
+    return choice.hasGrammarSymbol() && choice.getGrammarSymbol().getProduction() != null;
+  }
+
   private final boolean reachesUncoveredAlternative(final Choice choice, final int maxHeight) {
+    final int childHeight = (requiresNode(choice)) ? (maxHeight - 1) : (maxHeight);
+
     for (final Alternative alternative : choice.getSuccessorEdges()) {
-      if (reachesUncoveredAlternative(alternative, maxHeight)) {
+      if (reachesUncoveredAlternative(alternative, childHeight)) {
         return true;
       }
     }
@@ -45,28 +51,51 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
 
   private final boolean reachesUncoveredAlternative(final Alternative alternative,
       final int maxHeight) {
+    final Sequence sequence = alternative.getTarget();
+
+    assert (this.reachableNodes.containsKey(sequence));
+    assert (this.minHeights.containsKey(sequence));
+
     if (!this.coverage.isCovered(alternative)) {
-      return true;
+      final int minHeightSequence = this.minHeights.get(sequence);
+
+      if (minHeightSequence <= maxHeight) {
+        // TODO remove
+        //System.out.println("(1) reaches uncovered alternative of "
+        //    + alternative.getSource().getGrammarSymbol());
+
+        return true;
+      }
     }
 
-    // alternative has already been covered, but it may lead to other, uncovered alternatives
-    final Sequence sequence = alternative.getTarget();
-    assert (this.reachableChoices.containsKey(sequence));
+    // alternative has already been covered (or height limit does not suffice to cover alternative),
+    // but it may lead to other, uncovered alternatives
 
-    final Map<Choice, Integer> reachableChoicesAlternative = this.reachableChoices.get(sequence);
-    for (final Map.Entry<Choice, Integer> entry : reachableChoicesAlternative.entrySet()) {
-      final Choice choice = entry.getKey();
-      final int distance = entry.getValue();
+    final Map<GrammarGraphNode<?,?>, Integer> reachableNodesAlternative =
+        this.reachableNodes.get(sequence);
 
-      assert (this.minHeights.containsKey(choice));
-      final int minHeightChoice = this.minHeights.get(choice);
+    for (final Map.Entry<GrammarGraphNode<?,?>, Integer> entry :
+        reachableNodesAlternative.entrySet()) {
+      final GrammarGraphNode<?,?> reachableNode = entry.getKey();
 
-      if (distance + minHeightChoice <= maxHeight) {
-        for (final Alternative reachableAlternative : choice.getSuccessorEdges()) {
-          if (!this.coverage.isCovered(reachableAlternative)) {
-            return true;
-          }
-        }
+      if (!(reachableNode instanceof Sequence)) {
+        continue;
+      }
+
+      final Sequence reachableSequence = (Sequence) reachableNode;
+      final Integer minHeightReachableSequence = entry.getValue();
+
+      assert (reachableNode.numberOfPredecessors() == 1);
+      final Alternative alternativeToReachableSequence =
+          reachableSequence.getPredecessorEdges().get(0);
+
+      if (!this.coverage.isCovered(alternativeToReachableSequence)
+          && minHeightReachableSequence <= maxHeight) {
+        // TODO remove
+        //System.out.println("(2) reaches uncovered alternative of "
+        //    + alternativeToReachableSequence.getSource().getGrammarSymbol());
+
+        return true;
       }
     }
 
@@ -97,6 +126,31 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
       return this.strategyUncovered.chooseCount(element, maxHeight);
     } else {
       return this.strategyCovered.chooseCount(element, maxHeight);
+    }
+  }
+
+  @Override
+  public final boolean generateMoreElements(final Element element, final int count,
+      final int maxHeight) {
+    // TODO remove
+    if (false) {
+      final String parentChoiceName =
+          element.getSource().getPredecessorEdges().get(0).getSource().getGrammarSymbol().getName();
+
+      for (int c = 0; c < (40 - maxHeight); ++c) {
+        System.out.print(".");
+      }
+
+      System.out.format("%s (%d, %d): %d\n",
+          parentChoiceName, count, maxHeight, this.coverage.missingCount());
+
+      reachesUncoveredAlternative(element.getTarget(), maxHeight);
+    }
+
+    if (reachesUncoveredAlternative(element.getTarget(), maxHeight)) {
+      return this.strategyUncovered.generateMoreElements(element, count, maxHeight);
+    } else {
+      return this.strategyCovered.generateMoreElements(element, count, maxHeight);
     }
   }
 
