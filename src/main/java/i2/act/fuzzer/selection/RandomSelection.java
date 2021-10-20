@@ -2,7 +2,6 @@ package i2.act.fuzzer.selection;
 
 import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
-import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
 
 import java.util.List;
 import java.util.Random;
@@ -55,25 +54,6 @@ public final class RandomSelection implements SelectionStrategy {
 
     assert (false);
     return null;
-  }
-
-  @Override
-  public final int chooseCount(final Element element, final int maxHeight) {
-    final Quantifier quantifier = element.getQuantifier();
-
-    if (quantifier == Quantifier.QUANT_OPTIONAL) {
-      return (this.rng.nextInt(element.getWeight() + 1) == 0) ? 0 : 1;
-    } else {
-      assert (quantifier == Quantifier.QUANT_STAR
-          || quantifier == Quantifier.QUANT_PLUS);
-
-      int count = (quantifier == Quantifier.QUANT_PLUS) ? 1 : 0;
-      while (this.rng.nextInt(element.getWeight() + 1) != 0) {
-        ++count;
-      }
-
-      return count;
-    }
   }
 
   @Override

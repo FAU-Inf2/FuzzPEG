@@ -121,15 +121,6 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
   }
 
   @Override
-  public final int chooseCount(final Element element, final int maxHeight) {
-    if (reachesUncoveredAlternative(element.getTarget(), maxHeight)) {
-      return this.strategyUncovered.chooseCount(element, maxHeight);
-    } else {
-      return this.strategyCovered.chooseCount(element, maxHeight);
-    }
-  }
-
-  @Override
   public final boolean generateMoreElements(final Element element, final int count,
       final int maxHeight) {
     // TODO remove

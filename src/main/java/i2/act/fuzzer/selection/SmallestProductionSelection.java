@@ -3,7 +3,6 @@ package i2.act.fuzzer.selection;
 import i2.act.grammargraph.GrammarGraph;
 import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
-import i2.act.grammargraph.GrammarGraphEdge.Element.Quantifier;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.properties.MinSizeComputation;
 
@@ -69,28 +68,6 @@ public final class SmallestProductionSelection implements SelectionStrategy {
     }
 
     return this.baseStrategy.chooseAlternative(remainingAlternatives, maxHeight);
-  }
-
-  @Override
-  public final int chooseCount(final Element element, final int maxHeight) {
-    final Quantifier quantifier = element.getQuantifier();
-
-    if (quantifier == Quantifier.QUANT_OPTIONAL) {
-      return (chooseSmall()) ? 0 : 1;
-    } else {
-      assert (quantifier == Quantifier.QUANT_STAR
-          || quantifier == Quantifier.QUANT_PLUS);
-
-      int count = (quantifier == Quantifier.QUANT_PLUS) ? 1 : 0;
-
-      final int adjustedWeight =
-          (int)(Math.ceil((1.0 - this.probability) * (element.getWeight())));
-      while (this.rng.nextInt(adjustedWeight + 1) != 0) {
-        ++count;
-      }
-
-      return count;
-    }
   }
 
   @Override
