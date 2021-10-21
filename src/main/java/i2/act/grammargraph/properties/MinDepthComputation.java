@@ -48,7 +48,7 @@ public final class MinDepthComputation extends PropertyComputation<Integer> {
     }
 
     if (node == this.grammarGraph.getRootNode()) {
-      // root note might have incoming edges
+      // root node might have incoming edges
       return 0;
     }
 
