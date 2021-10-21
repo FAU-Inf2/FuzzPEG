@@ -210,9 +210,9 @@ struct_declarator_list
   ;
 
 struct_declarator
-  : declarator
-  | COLON constant_expression
+  : COLON constant_expression
   | declarator COLON constant_expression
+  | declarator
   ;
 
 enum_specifier
