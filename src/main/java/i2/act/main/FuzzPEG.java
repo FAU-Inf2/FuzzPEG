@@ -45,7 +45,6 @@ public final class FuzzPEG {
 
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
-  private static final String OPTION_PRINT_MIN_HEIGHTS_ALL = "--printMinHeightsAll";
   private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
   private static final String OPTION_PRINT_REACHABLE_CHOICES = "--printReachableChoices";
   private static final String OPTION_PRINT_UNCOVERED = "--printUncovered";
@@ -74,7 +73,6 @@ public final class FuzzPEG {
 
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
-    argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS_ALL, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_MAX_HEIGHT, false);
     argumentsParser.addOption(OPTION_PRINT_REACHABLE_CHOICES, false);
     argumentsParser.addOption(OPTION_PRINT_UNCOVERED, false);
@@ -122,15 +120,8 @@ public final class FuzzPEG {
     printUnreachableNodes(reachable);
 
     if (arguments.hasOption(OPTION_PRINT_MIN_HEIGHTS)) {
-      final Map<GrammarGraphNode<?,?>, Integer> minHeights = MinHeightComputation.computeMinHeights(
-          grammarGraph, MinHeightComputation.Mode.SINGLE_ALTERNATIVE);
-
-      printComputationResults(minHeights);
-    }
-
-    if (arguments.hasOption(OPTION_PRINT_MIN_HEIGHTS_ALL)) {
-      final Map<GrammarGraphNode<?,?>, Integer> minHeights = MinHeightComputation.computeMinHeights(
-          grammarGraph, MinHeightComputation.Mode.ALL_ALTERNATIVES);
+      final Map<GrammarGraphNode<?,?>, Integer> minHeights =
+          MinHeightComputation.computeMinHeights(grammarGraph);
 
       printComputationResults(minHeights);
     }
