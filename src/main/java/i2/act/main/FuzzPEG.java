@@ -6,6 +6,7 @@ import i2.act.fuzzer.selection.*;
 import i2.act.fuzzer.tokens.*;
 import i2.act.fuzzer.util.TokenJoiner;
 import i2.act.grammargraph.GrammarGraph;
+import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
 import i2.act.grammargraph.properties.*;
@@ -48,6 +49,7 @@ public final class FuzzPEG {
   private static final String OPTION_PRINT_MIN_DEPTHS = "--printMinDepths";
   private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
   private static final String OPTION_PRINT_REACHABLE_CHOICES = "--printReachableChoices";
+  private static final String OPTION_PRINT_UNCOVERED = "--printUncovered";
 
   private static final String OPTION_SEED = "--seed";
   private static final String OPTION_COUNT = "--count";
@@ -77,6 +79,7 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_PRINT_MIN_DEPTHS, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_MAX_HEIGHT, false);
     argumentsParser.addOption(OPTION_PRINT_REACHABLE_CHOICES, false);
+    argumentsParser.addOption(OPTION_PRINT_UNCOVERED, false);
 
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
@@ -308,6 +311,29 @@ public final class FuzzPEG {
 
       System.err.format("[i] covered %3d of %3d alternatives\n",
           coverage.coveredCount(), coverage.totalCount());
+    }
+
+    if (arguments.hasOption(OPTION_PRINT_UNCOVERED)) {
+      for (final GrammarGraphNode<?,?> node : grammarGraph) {
+        if (!(node instanceof Choice)) {
+          continue;
+        }
+
+        assert (reachable.containsKey(node));
+        if (!reachable.get(node)) {
+          continue;
+        }
+
+        final Choice choice = (Choice) node;
+        final String choiceName =
+            (choice.hasGrammarSymbol()) ? (choice.getGrammarSymbol().getName()) : "<unknown>";
+
+        for (final Alternative alternative : choice.getSuccessorEdges()) {
+          if (!coverage.isCovered(alternative)) {
+            System.err.format("[i] missing alternative of '%s'\n", choiceName);
+          }
+        }
+      }
     }
 
     final int numberOfAttempts = fuzzerLoop.numberOfAttempts();
