@@ -13,23 +13,26 @@ public final class ReachableComputation extends PropertyComputation<Boolean> {
 
   public static final Map<GrammarGraphNode<?,?>, Boolean> computeReachable(
       final GrammarGraph grammarGraph, final boolean considerSkippedTokensReachable) {
-    final ReachableComputation computation =
-        new ReachableComputation(considerSkippedTokensReachable);
+    final ReachableComputation computation = new ReachableComputation(
+        grammarGraph.getRootNode(), considerSkippedTokensReachable);
     return computation.compute(grammarGraph);
   }
 
   // -----------------------------------------------------------------------------------------------
 
+  private final Choice rootNode;
   private final boolean considerSkippedTokensReachable;
 
-  private ReachableComputation(final boolean considerSkippedTokensReachable) {
+  private ReachableComputation(final Choice rootNode,
+      final boolean considerSkippedTokensReachable) {
     super(PropertyComputation.Direction.FORWARDS);
+    this.rootNode = rootNode;
     this.considerSkippedTokensReachable = considerSkippedTokensReachable;
   }
 
   @Override
   protected final Boolean init(final Choice node, final GrammarGraph grammarGraph) {
-    if (node == grammarGraph.getRootNode()) {
+    if (node == this.rootNode) {
       return true;
     }
 
@@ -52,7 +55,8 @@ public final class ReachableComputation extends PropertyComputation<Boolean> {
 
   @Override
   protected final Boolean transfer(final Choice node, final Boolean in) {
-    return in;
+    // root node might have incoming edges
+    return in || (node == this.rootNode);
   }
 
   @Override
@@ -64,9 +68,9 @@ public final class ReachableComputation extends PropertyComputation<Boolean> {
   protected final Boolean confluence(final Choice node,
       final Iterable<Pair<GrammarGraphEdge<?, ?>, Boolean>> inSets) {
     for (final Pair<GrammarGraphEdge<?, ?>, Boolean> inSet : inSets) {
-      final Boolean successorReachable = inSet.getSecond();
+      final Boolean predecessorReachable = inSet.getSecond();
 
-      if (successorReachable) {
+      if (predecessorReachable) {
         return true;
       }
     }
