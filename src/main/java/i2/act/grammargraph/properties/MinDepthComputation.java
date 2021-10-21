@@ -3,6 +3,7 @@ package i2.act.grammargraph.properties;
 import i2.act.grammargraph.*;
 import i2.act.grammargraph.GrammarGraphNode.Choice;
 import i2.act.grammargraph.GrammarGraphNode.Sequence;
+import i2.act.peg.symbols.LexerSymbol;
 import i2.act.util.Pair;
 
 import java.util.Iterator;
@@ -27,9 +28,25 @@ public final class MinDepthComputation extends PropertyComputation<Integer> {
     this.grammarGraph = grammarGraph;
   }
 
+  private final boolean isRoot(final Choice choice) {
+    if (choice == this.grammarGraph.getRootNode()) {
+      return true;
+    }
+
+    if (choice.hasGrammarSymbol() && (choice.getGrammarSymbol() instanceof LexerSymbol)) {
+      final LexerSymbol lexerSymbol = (LexerSymbol) choice.getGrammarSymbol();
+
+      if (lexerSymbol == LexerSymbol.EOF || lexerSymbol.isSkippedToken()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @Override
   protected final Integer init(final Choice node, final GrammarGraph grammarGraph) {
-    if (node == grammarGraph.getRootNode() || node.isRoot()) {
+    if (isRoot(node)) {
       return 0;
     } else {
       return UNKNOWN;
@@ -43,7 +60,7 @@ public final class MinDepthComputation extends PropertyComputation<Integer> {
 
   @Override
   protected final Integer transfer(final Choice node, final Integer in) {
-    if (node == this.grammarGraph.getRootNode()) {
+    if (isRoot(node)) {
       // root node might have incoming edges
       return 0;
     }
