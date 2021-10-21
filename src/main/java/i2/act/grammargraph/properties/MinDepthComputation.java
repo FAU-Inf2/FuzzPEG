@@ -43,13 +43,13 @@ public final class MinDepthComputation extends PropertyComputation<Integer> {
 
   @Override
   protected final Integer transfer(final Choice node, final Integer in) {
-    if (in == UNKNOWN) {
-      return UNKNOWN;
-    }
-
     if (node == this.grammarGraph.getRootNode()) {
       // root node might have incoming edges
       return 0;
+    }
+
+    if (in == UNKNOWN) {
+      return UNKNOWN;
     }
 
     if (!node.hasGrammarSymbol() || node.getGrammarSymbol().getProduction() == null) {
