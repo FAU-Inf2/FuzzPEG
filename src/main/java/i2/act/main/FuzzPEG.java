@@ -14,6 +14,7 @@ import i2.act.packrat.Lexer;
 import i2.act.packrat.Parser;
 import i2.act.packrat.TokenStream;
 import i2.act.packrat.cst.Node;
+import i2.act.packrat.cst.visitors.DotGenerator;
 import i2.act.peg.ast.Grammar;
 import i2.act.peg.ast.visitors.NameAnalysis;
 import i2.act.peg.parser.PEGParser;
@@ -62,6 +63,7 @@ public final class FuzzPEG {
   private static final String OPTION_JOIN = "--join";
 
   private static final String OPTION_OUT = "--out";
+  private static final String OPTION_DOT = "--dot";
 
   private static final String OPTION_TEST_PEG = "--testPEG";
 
@@ -90,6 +92,7 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
 
     argumentsParser.addOption(OPTION_OUT, false, true, "<file name pattern>");
+    argumentsParser.addOption(OPTION_DOT, false, true, "<file name pattern>");
 
     argumentsParser.addOption(OPTION_TEST_PEG, false);
   }
@@ -193,6 +196,7 @@ public final class FuzzPEG {
     final TokenJoiner joiner = new TokenJoiner(grammar, separator);
 
     final String fileNamePattern = arguments.getOptionOr(OPTION_OUT, null);
+    final String fileNamePatternDot = arguments.getOptionOr(OPTION_DOT, null);
 
     final boolean testPEG = arguments.hasOption(OPTION_TEST_PEG);
     final Lexer lexer;
@@ -288,6 +292,17 @@ public final class FuzzPEG {
 
         final SafeWriter writer = SafeWriter.openFile(fileName);
         writer.write(program);
+        writer.close();
+      }
+
+      if (fileNamePatternDot != null) {
+        final String fileName =
+            expandFileNamePattern(fileNamePatternDot, maxHeight, index, seed, batchSize);
+
+        FileUtil.createPathIfNotExists(fileName);
+
+        final SafeWriter writer = SafeWriter.openFile(fileName);
+        DotGenerator.print(tree, writer);
         writer.close();
       }
 
