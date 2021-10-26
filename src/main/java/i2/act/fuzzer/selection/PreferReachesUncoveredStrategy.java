@@ -22,15 +22,18 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
   private final AlternativeCoverage coverage;
   private final SelectionStrategy strategyUncovered;
   private final SelectionStrategy strategyCovered;
+  private final boolean strictQuantifiers;
 
   public PreferReachesUncoveredStrategy(final GrammarGraph grammarGraph,
       final AlternativeCoverage coverage,
-      final SelectionStrategy strategyUncovered, final SelectionStrategy strategyCovered) {
+      final SelectionStrategy strategyUncovered, final SelectionStrategy strategyCovered,
+      final boolean strictQuantifiers) {
     this.reachableNodes = ReachableNodesComputation.computeReachableNodes(grammarGraph);
     this.minHeights = MinHeightComputation.computeMinHeights(grammarGraph);
     this.coverage = coverage;
     this.strategyUncovered = strategyUncovered;
     this.strategyCovered = strategyCovered;
+    this.strictQuantifiers = strictQuantifiers;
   }
 
   private static final boolean requiresNode(final Choice choice) {
@@ -115,10 +118,17 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
   @Override
   public final boolean generateMoreElements(final Element element, final int count,
       final int maxHeight) {
-    if (reachesUncoveredAlternative(element.getTarget(), maxHeight)) {
-      return this.strategyUncovered.generateMoreElements(element, count, maxHeight);
+    final boolean reachesUncoveredAlternative =
+        reachesUncoveredAlternative(element.getTarget(), maxHeight);
+
+    if (this.strictQuantifiers) {
+      return reachesUncoveredAlternative;
     } else {
-      return this.strategyCovered.generateMoreElements(element, count, maxHeight);
+      if (reachesUncoveredAlternative) {
+        return this.strategyUncovered.generateMoreElements(element, count, maxHeight);
+      } else {
+        return this.strategyCovered.generateMoreElements(element, count, maxHeight);
+      }
     }
   }
 

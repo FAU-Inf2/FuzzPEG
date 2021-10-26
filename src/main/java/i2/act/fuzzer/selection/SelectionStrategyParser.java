@@ -38,6 +38,8 @@ public final class SelectionStrategyParser {
     final LexerSymbol UNCOV = builder.define("UNCOV", "[Uu][Nn][Cc][Oo][Vv] ( [Ee][Rr][Ee][Dd] )?");
     final LexerSymbol REACHESUNCOV = builder.define(
         "REACHESUNCOV", "[Rr][Ee][Aa][Cc][Hh][Ee][Ss] [Uu][Nn][Cc][Oo][Vv] ( [Ee][Rr][Ee][Dd] )?");
+    final LexerSymbol TRUE = builder.define("TRUE", "[Tt][Rr][Uu][Ee]");
+    final LexerSymbol FALSE = builder.define("FALSE", "[Ff][Aa][Ll][Ss][Ee]");
     final LexerSymbol PROBABILITY = builder.define("PROBABILITY", "'1.0' | '0.' [0-9]+");
     final LexerSymbol SPACE = builder.define("SPACE", "( ' ' | '\\n' | '\\r' | '\\t' )+", true);
 
@@ -65,7 +67,8 @@ public final class SelectionStrategyParser {
         seq(UNCOV, LPAREN, selection_strategy, COMMA, selection_strategy, RPAREN));
 
     builder.define(reaches_uncovered,
-        seq(REACHESUNCOV, LPAREN, selection_strategy, COMMA, selection_strategy, RPAREN));
+        seq(REACHESUNCOV, LPAREN, selection_strategy, COMMA, selection_strategy,
+            opt(seq(COMMA, alt(TRUE, FALSE))), RPAREN));
 
     final Grammar grammar = builder.build();
 
@@ -111,13 +114,26 @@ public final class SelectionStrategyParser {
 
     // reaches_uncovered
     visitor.add(reaches_uncovered, (node, _void) -> {
-      assert (node.numberOfChildren() == 6);
-
       final SelectionStrategy strategyUncovered = visitor.visit(node.getChild(2));
       final SelectionStrategy strategyCovered = visitor.visit(node.getChild(4));
 
+      final boolean strictQuantifiers;
+      {
+        if (node.numberOfChildren() == 8) {
+          final String booleanLiteral = node.getChild(6).getText();
+          strictQuantifiers = booleanLiteral.equalsIgnoreCase("true");
+
+          if (!strictQuantifiers) {
+            assert (booleanLiteral.equalsIgnoreCase("false"));
+          }
+        } else {
+          assert (node.numberOfChildren() == 6);
+          strictQuantifiers = true;
+        }
+      }
+
       return new PreferReachesUncoveredStrategy(
-          grammarGraph, coverage, strategyUncovered, strategyCovered);
+          grammarGraph, coverage, strategyUncovered, strategyCovered, strictQuantifiers);
     });
 
     // root
