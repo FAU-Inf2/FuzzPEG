@@ -17,8 +17,8 @@ sql_statement
   | factored_select_statement
   | insert_statement
   | reindex_statement
-  | simple_select_statement
   | select_statement
+  | simple_select_statement
   | update_statement_limited
   | update_statement
   ;
@@ -88,7 +88,7 @@ insert_statement
   : ( with_clause )?
       ( INSERT OR REPLACE | INSERT OR ROLLBACK | INSERT OR ABORT | INSERT OR FAIL | INSERT OR IGNORE | INSERT | REPLACE ) INTO
       ( database_name DOT )? table_name ( LPAREN column_name ( COMMA column_name )* RPAREN )?
-      ( VALUES LPAREN expr ( COMMA expr )* RPAREN ( COMMA LPAREN expr ( COMMA expr )* RPAREN )* | select_statement | DEFAULT VALUES )
+      ( select_statement | VALUES LPAREN expr ( COMMA expr )* RPAREN ( COMMA LPAREN expr ( COMMA expr )* RPAREN )* | DEFAULT VALUES )
   ;
 
 reindex_statement
