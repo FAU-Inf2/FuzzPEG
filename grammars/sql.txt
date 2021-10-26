@@ -9,8 +9,8 @@ sql_statement
   | create_schema_statement
   | create_table_statement
   | create_view_statement
-  | delete_statement
   | delete_statement_limited
+  | delete_statement
   | drop_index_statement
   | drop_table_statement
   | drop_view_statement
@@ -19,8 +19,8 @@ sql_statement
   | reindex_statement
   | simple_select_statement
   | select_statement
-  | update_statement
   | update_statement_limited
+  | update_statement
   ;
 
 alter_table_statement
@@ -134,7 +134,7 @@ update_statement_limited
       SET column_name ASSIGN expr ( COMMA column_name ASSIGN expr )* ( WHERE expr )?
       (
         ( ORDER BY ordering_term ( COMMA ordering_term )* )?
-        LIMIT expr ( ( OFFSET | COMMA ) expr )? 
+        LIMIT expr ( ( OFFSET | COMMA ) expr )?
       )?
   ;
 
@@ -206,7 +206,7 @@ is_expr
 
 in_expr
   : null_expr
-      ( ( NOT )? IN ( LPAREN ( select_statement | expr ( COMMA expr )* )?  RPAREN | ( database_name DOT )? table_name ) )*
+      ( ( NOT )? IN ( ( database_name DOT )? table_name ) | LPAREN ( select_statement | expr ( COMMA expr )* )? RPAREN )*
   ;
 
 null_expr
@@ -230,22 +230,22 @@ unary_expr
   ;
 
 atom
-  : aggregate_func_invoc
+  : ( ( NOT )? EXISTS )? LPAREN select_statement RPAREN
+  | CASE ( expr )? ( WHEN expr THEN expr )+ ( ELSE expr )? END
+  | CAST LPAREN expr AS type_name RPAREN
+  | raise_function
   | window_func_invoc
   | function_name LPAREN ( ( DISTINCT )? expr ( COMMA expr )* | STAR )? RPAREN
+  | aggregate_func_invoc
   | database_name DOT table_name DOT column_name
   | table_name DOT column_name
   | column_name
-  | LPAREN expr RPAREN
-  | CAST LPAREN expr AS type_name RPAREN
-  | ( ( NOT )? EXISTS )? LPAREN select_statement RPAREN
-  | CASE ( expr )? ( WHEN expr THEN expr )+ ( ELSE expr )? END
-  | raise_function
   | literal_value
+  | LPAREN expr RPAREN
   ;
 
 aggregate_func_invoc
-  : aggregate_func LPAREN ( STAR | ( distinct_or_all )? expr ( COMMA expr )* )? RPAREN ( filter_clause )? ( OVER ( window_defn | window_name ) )?
+  : aggregate_func LPAREN ( STAR | ( distinct_or_all )? expr ( COMMA expr )* )? RPAREN ( filter_clause )? ( OVER ( window_name | window_defn ) )?
   ;
 
 aggregate_func
@@ -258,7 +258,7 @@ aggregate_func
   ;
 
 window_func_invoc
-  : window_func LPAREN ( STAR | ( expr ( COMMA expr )* ) )? RPAREN ( filter_clause )? OVER ( window_defn | window_name )
+  : window_func LPAREN ( STAR | ( expr ( COMMA expr )* ) )? RPAREN ( filter_clause )? OVER ( window_name | window_defn )
   ;
 
 window_func
@@ -447,31 +447,31 @@ schema_name
   : any_name
   ;
 
-table_name 
+table_name
   : any_name
   ;
 
-table_or_index_name 
+table_or_index_name
   : any_name
   ;
 
-new_table_name 
+new_table_name
   : any_name
   ;
 
-column_name 
+column_name
   : any_name
   ;
 
-collation_name 
+collation_name
   : any_name
   ;
 
-foreign_table 
+foreign_table
   : any_name
   ;
 
-index_name 
+index_name
   : any_name
   ;
 
@@ -479,23 +479,23 @@ trigger_name
   : any_name
   ;
 
-view_name 
+view_name
   : any_name
   ;
 
-module_name 
+module_name
   : any_name
   ;
 
-pragma_name 
+pragma_name
   : any_name
   ;
 
-savepoint_name 
+savepoint_name
   : any_name
   ;
 
-table_alias 
+table_alias
   : any_name
   ;
 
@@ -504,7 +504,7 @@ transaction_name
   ;
 
 any_name
-  : IDENTIFIER 
+  : IDENTIFIER
   | STRING_LITERAL
   | LPAREN any_name RPAREN
   ;
