@@ -43,14 +43,18 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
       private int previousCoverage = 0;
 
       @Override
+      public final void beforeEachAttempt() {
+        this.previousCoverage = coverage.coveredCount();
+      }
+
+      @Override
       public final boolean cancel() {
-        return (this.previousCoverage == coverage.totalCount());
+        return coverage.isFullyCovered();
       }
 
       @Override
       protected final boolean keep(final Node<?> tree) {
-        final boolean keep = coverage.coveredCount() > this.previousCoverage;
-        this.previousCoverage = coverage.coveredCount();
+        final boolean keep = (coverage.coveredCount() > this.previousCoverage);
         return keep;
       }
 
@@ -139,6 +143,7 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
     protected final Node<?> generateNext() {
       if (this.next == null) {
         while (this.baseLoop.hasNext()) {
+          beforeEachAttempt();
           final Node<?> next = this.baseLoop.next();
 
           if (keep(next)) {
@@ -153,6 +158,8 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
 
       return next;
     }
+
+    protected abstract void beforeEachAttempt();
 
     protected abstract boolean cancel();
 

@@ -57,6 +57,7 @@ public final class FuzzPEG {
   private static final String OPTION_BATCH_SIZE = "--batchSize";
 
   private static final String OPTION_ONLY_ADDITIONAL_COVERAGE = "--onlyAdditionalCoverage";
+  private static final String OPTION_RESET_COVERAGE = "--resetCoverage";
 
   private static final String OPTION_JOIN = "--join";
 
@@ -84,6 +85,7 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
 
     argumentsParser.addOption(OPTION_ONLY_ADDITIONAL_COVERAGE, false);
+    argumentsParser.addOption(OPTION_RESET_COVERAGE, false);
 
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
 
@@ -246,6 +248,8 @@ public final class FuzzPEG {
       }
     }
 
+    final boolean resetCoverage = arguments.hasOption(OPTION_RESET_COVERAGE);
+
     for (final Node<?> tree : fuzzerLoop) {
       final String program = joiner.join(tree);
 
@@ -287,6 +291,11 @@ public final class FuzzPEG {
 
       System.err.format("[i] covered %3d of %3d alternatives\n",
           coverage.coveredCount(), coverage.totalCount());
+
+      if (resetCoverage && coverage.isFullyCovered()) {
+        System.err.println("[i] reset coverage");
+        coverage.reset();
+      }
     }
 
     if (arguments.hasOption(OPTION_PRINT_UNCOVERED)) {

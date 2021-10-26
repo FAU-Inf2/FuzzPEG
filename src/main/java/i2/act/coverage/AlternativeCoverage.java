@@ -74,4 +74,8 @@ public final class AlternativeCoverage {
     return missingCount() == 0;
   }
 
+  public final void reset() {
+    this.covered.clear();
+  }
+
 }
