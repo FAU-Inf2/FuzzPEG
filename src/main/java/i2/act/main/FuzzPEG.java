@@ -44,6 +44,8 @@ public final class FuzzPEG {
   private static final String OPTION_GRAMMAR = "--grammar";
   private static final String OPTION_MAX_HEIGHT = "--maxHeight";
 
+  private static final String OPTION_SELECTION = "--selection";
+
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
   private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
@@ -53,10 +55,6 @@ public final class FuzzPEG {
   private static final String OPTION_SEED = "--seed";
   private static final String OPTION_COUNT = "--count";
   private static final String OPTION_BATCH_SIZE = "--batchSize";
-
-  private static final String OPTION_PREFER_UNCOVERED = "--preferUncovered";
-  private static final String OPTION_PREFER_REACHES_UNCOVERED = "--preferReachesUncovered";
-  private static final String OPTION_SMALL = "--small";
 
   private static final String OPTION_ONLY_ADDITIONAL_COVERAGE = "--onlyAdditionalCoverage";
 
@@ -73,6 +71,8 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_GRAMMAR, true, true, "<path to grammar>");
     argumentsParser.addOption(OPTION_MAX_HEIGHT, false, true, "<max. height>");
 
+    argumentsParser.addOption(OPTION_SELECTION, false, true, "<selection strategy>");
+
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_MAX_HEIGHT, false);
@@ -82,10 +82,6 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
     argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
     argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
-
-    argumentsParser.addOption(OPTION_PREFER_UNCOVERED, false);
-    argumentsParser.addOption(OPTION_PREFER_REACHES_UNCOVERED, false);
-    argumentsParser.addOption(OPTION_SMALL, false, true, "<probability>");
 
     argumentsParser.addOption(OPTION_ONLY_ADDITIONAL_COVERAGE, false);
 
@@ -217,41 +213,24 @@ public final class FuzzPEG {
 
     final AlternativeCoverage coverage = new AlternativeCoverage(grammarGraph);
 
-    // TODO improve
     final SelectionStrategy selectionStrategy;
     {
-      final RandomSelection randomSelection = new RandomSelection(rng);
+      if (arguments.hasOption(OPTION_SELECTION)) {
+        try {
+          selectionStrategy = SelectionStrategyParser.parse(
+              arguments.getOption(OPTION_SELECTION), grammarGraph, coverage, rng);
+        } catch (final Exception exception) {
+          abort(String.format(
+              "[!] could not parse selection strategy: %s", exception.getMessage()));
 
-      final SmallestProductionSelection smallestProductionSelection;
-      {
-        if (arguments.hasOption(OPTION_SMALL)) {
-          final double probability = arguments.getFloatOption(OPTION_SMALL);
-
-          smallestProductionSelection =
-              new SmallestProductionSelection(grammarGraph, randomSelection, probability, rng);
-        } else {
-          smallestProductionSelection = null;
+          assert (false);
+          return;
         }
-      }
-
-      if (arguments.hasOption(OPTION_PREFER_REACHES_UNCOVERED)) {
-        final SelectionStrategy strategyCovered =
-            (smallestProductionSelection == null) ? randomSelection : smallestProductionSelection;
-        final SelectionStrategy strategyUncovered = randomSelection;
-
-        selectionStrategy = new PreferReachesUncoveredStrategy(
-            grammarGraph, coverage, strategyUncovered, strategyCovered);
-      } else if (arguments.hasOption(OPTION_PREFER_UNCOVERED)) {
-        final SelectionStrategy strategyCovered =
-            (smallestProductionSelection == null) ? randomSelection : smallestProductionSelection;
-        final SelectionStrategy strategyUncovered = randomSelection;
-
-        selectionStrategy =
-            new PreferUncoveredStrategy(coverage, strategyUncovered, strategyCovered);
       } else {
-        selectionStrategy =
-            (smallestProductionSelection == null) ? randomSelection : smallestProductionSelection;
+        selectionStrategy = new RandomSelection(rng);
       }
+
+      assert (selectionStrategy != null);
     }
 
     final Fuzzer fuzzer =
