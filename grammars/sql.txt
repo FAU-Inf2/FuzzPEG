@@ -345,12 +345,6 @@ ordering_term
   : expr ( COLLATE collation_name )? ( ASC | DESC )? ( NULLS ( FIRST | LAST ) )?
   ;
 
-pragma_value
-  : signed_number
-  | name
-  | STRING_LITERAL
-  ;
-
 common_table_expression
   : table_name ( LPAREN column_name ( COMMA column_name )* RPAREN )? AS LPAREN select_statement RPAREN
   ;
@@ -451,10 +445,6 @@ table_name
   : any_name
   ;
 
-table_or_index_name
-  : any_name
-  ;
-
 new_table_name
   : any_name
   ;
@@ -475,31 +465,11 @@ index_name
   : any_name
   ;
 
-trigger_name
-  : any_name
-  ;
-
 view_name
   : any_name
   ;
 
-module_name
-  : any_name
-  ;
-
-pragma_name
-  : any_name
-  ;
-
-savepoint_name
-  : any_name
-  ;
-
 table_alias
-  : any_name
-  ;
-
-transaction_name
   : any_name
   ;
 
