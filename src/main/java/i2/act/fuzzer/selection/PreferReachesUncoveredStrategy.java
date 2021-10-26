@@ -60,10 +60,6 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
       final int minHeightSequence = this.minHeights.get(sequence);
 
       if (minHeightSequence <= maxHeight) {
-        // TODO remove
-        //System.out.println("(1) reaches uncovered alternative of "
-        //    + alternative.getSource().getGrammarSymbol());
-
         return true;
       }
     }
@@ -91,10 +87,6 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
 
       if (!this.coverage.isCovered(alternativeToReachableSequence)
           && minHeightReachableSequence <= maxHeight) {
-        // TODO remove
-        //System.out.println("(2) reaches uncovered alternative of "
-        //    + alternativeToReachableSequence.getSource().getGrammarSymbol());
-
         return true;
       }
     }
@@ -123,21 +115,6 @@ public final class PreferReachesUncoveredStrategy implements SelectionStrategy {
   @Override
   public final boolean generateMoreElements(final Element element, final int count,
       final int maxHeight) {
-    // TODO remove
-    if (false) {
-      final String parentChoiceName =
-          element.getSource().getPredecessorEdges().get(0).getSource().getGrammarSymbol().getName();
-
-      for (int c = 0; c < (40 - maxHeight); ++c) {
-        System.out.print(".");
-      }
-
-      System.out.format("%s (%d, %d): %d\n",
-          parentChoiceName, count, maxHeight, this.coverage.missingCount());
-
-      reachesUncoveredAlternative(element.getTarget(), maxHeight);
-    }
-
     if (reachesUncoveredAlternative(element.getTarget(), maxHeight)) {
       return this.strategyUncovered.generateMoreElements(element, count, maxHeight);
     } else {
