@@ -130,9 +130,10 @@ Use the choice operator `|` to specify alternatives.
 
 **IMPORTANT**: In contrast to "traditional" context-free grammars in EBNF, the choice operator of
 PEGs is *ordered* (i.e., if the first alternative matches during parsing, the second one is
-ignored). Since *FuzzPEG* chooses alternatives randomly and "locally", it is possible that the
-programs generated from a PEG **cannot be parsed** with a parser for this PEG. For example, consider
-the following PEG:
+ignored). This introduces a potential problem which is somewhat similar to ambiguous grammars: since
+*FuzzPEG* chooses alternatives randomly and "locally", it is possible that the programs generated
+from a PEG **cannot be parsed** with a parser for this PEG (but other parsing algorithms might be
+able to successfully parse them). For example, consider the following PEG:
 
 
     foo: A | A B ;
@@ -142,7 +143,7 @@ the following PEG:
 
 *FuzzPEG* may generate the program `AB`, which cannot be parsed with this PEG: since the choice
 operator is ordered, the parser strictly applies the first alternative of `foo` to match the `A` in
-`AB`, after which a single `B` remains that cannot be parsed. Whether this is a problem or not,
+`AB`, after which a single `B` remains that cannot be parsed. Whether this is a problem or not
 depends on your use case. If your goal is to generate programs that can be parsed according to the
 given PEG, you have to rewrite the PEG such that it does not include such cases. In the example, the
 following PEG can be used instead:
@@ -184,7 +185,7 @@ During the program construction, *FuzzPEG* always ensures that the requirements 
 quantifier are met (in the example, *FuzzPEG* ensures that at least one `foo` is generated due to
 the semantics of the `+` quantifier). However, if *FuzzPEG* can choose if it generates another
 element or not, the probability that it generates another one is determined by the given weight (in
-the example, another `foo` is generated with a probability of (3 / 4)). 
+the example, another `foo` is generated with a probability of (3 / 4)).
 
 Alternatives and quantifiers without explicit weight have an implicit weight of 1.
 
