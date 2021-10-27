@@ -169,8 +169,8 @@ construction, the alternatives can be annotated with a weight:
       ;
 
 
-In this example, the probability that *FuzzPEG* chooses the first alternative of `foo` is (13 / (13
-+ 3)), while the probability that it chooses the second one is only (3 / (13 + 3)).
+In this example, the probability that *FuzzPEG* chooses the first alternative of `foo` is
+(13 / (13 + 3)), while the probability that it chooses the second one is only (3 / (13 + 3)).
 
 Similarly, it is possible to annotate quantifiers with a weight:
 
