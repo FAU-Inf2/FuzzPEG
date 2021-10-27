@@ -3,7 +3,7 @@ program
   ;
 
 chunk
-  : ( statement ( SEMICOLON )? ) <7>* ( last_statement ( SEMICOLON )? )?
+  : ( statement SEMICOLON ) <7>* ( last_statement SEMICOLON )?
   ;
 
 block
