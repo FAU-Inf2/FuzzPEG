@@ -23,7 +23,7 @@ To make *FuzzPEG* usable for practical purposes, it offers some advanced feature
   - When *FuzzPEG* generates a random token (e.g., an identifier), it makes sure that the randomly
     generated string does not collide with a different terminal (e.g., a keyword).
   - Simply concatenating two adjacent tokens may lead to an invalid result (e.g., if two adjacent
-    identifiers "foo" and "bar" are concatenated, the resulting "foobar" no longer consists of two
+    identifiers `foo` and `bar` are concatenated, the resulting `foobar` no longer consists of two
     identifiers). Thus, *FuzzPEG* automatically determines if two adjacent tokens require a
     separator; by default, this separator consists of a single space (but the separator may also be
     specified via a command line option).
@@ -52,6 +52,141 @@ file `build/libs/FuzzPEG.jar`. The instructions below assume that this file exis
 - You need a working JDK installation to build and run *FuzzPEG* (tested with OpenJDK 8 and 11).
 - Building *FuzzPEG* requires an internet connection to resolve external dependencies.
 
+
+## Parsing Expression Grammars (PEGs)
+
+*FuzzPEG* takes as input a *Parsing Expression Grammar* (PEG) that describes the lexical and
+syntactical rules that the generated programs should conform to. The following is an example for
+such a PEG in the notation of the [j-PEG](https://github.com/FAU-Inf2/j-PEG) library that *FuzzPEG*
+uses:
+
+
+    calculation: statement* EOF ;
+
+    statement: ( VAR_NAME ASSIGN )? expression SEMICOLON ;
+
+    expression: add_expression ;
+
+    add_expression: mul_expression ( ( ADD | SUB ) mul_expression )* ;
+
+    mul_expression: factor ( ( MUL | DIV ) factor )* ;
+
+    factor
+      : NUM
+      | VAR_NAME
+      | LPAREN expression RPAREN
+      ;
+
+    ASSIGN: ':=';
+    SEMICOLON: ';';
+
+    ADD: '+';
+    SUB: '-';
+    MUL: '*';
+    DIV: '/';
+
+    LPAREN: '(';
+    RPAREN: ')';
+
+    @skip
+    SPACE: ( ' ' | '\n' | '\r' | '\t' )+ ;
+
+    NUM: '0' | ( [1-9][0-9]* ) ;
+    VAR_NAME: [a-zA-Z] [a-zA-Z0-9]* ;
+
+
+This grammar matches programs of the following form:
+
+
+    foo := (13 + 3) * 12;
+    11 + foo;
+
+
+### Terminal Rules
+
+The names of terminal rules consist of upper case letters (e.g., `ASSIGN` or `SPACE`).
+
+The right hand side of a terminal rule consists of a single regular expression (please refer to the
+example above for the exact notation).
+
+If a terminal rule is annotated with `@skip` (e.g., the `SPACE` rule from above), its matches are
+discarded (i.e., its matches do not appear as tokens in the token stream).
+
+The implicitly defined `EOF` rule matches the end of the input.
+
+### Non-Terminal Rules
+
+The names of non-terminal rules consist of lower case letters (e.g., `calculation` or `statement`).
+The first non-terminal rule in the given grammar is the start rule with which the program
+construction begins.
+
+The right hand side of a non-terminal rule uses a notation similar to that of EBNF:
+
+- `*` means zero or more repetitions
+- `+` means one or more repetitions
+- `?` means zero or one occurrences
+
+Use the choice operator `|` to specify alternatives.
+
+**IMPORTANT**: In contrast to "traditional" context-free grammars in EBNF, the choice operator of
+PEGs is *ordered* (i.e., if the first alternative matches during parsing, the second one is
+ignored). Since *FuzzPEG* chooses alternatives randomly and "locally", it is possible that the
+programs generated from a PEG **cannot be parsed** with a parser for this PEG. For example, consider
+the following PEG:
+
+
+    foo: A | A B ;
+    A: 'A' ;
+    B: 'B' ;
+
+
+*FuzzPEG* may generate the program `AB`, which cannot be parsed with this PEG: since the choice
+operator is ordered, the parser strictly applies the first alternative of `foo` to match the `A` in
+`AB`, after which a single `B` remains that cannot be parsed. Whether this is a problem or not,
+depends on your use case. If your goal is to generate programs that can be parsed according to the
+given PEG, you have to rewrite the PEG such that it does not include such cases. In the example, the
+following PEG can be used instead:
+
+
+    foo: A B | A ;
+    A: 'A' ;
+    B: 'B' ;
+
+
+If you are unsure whether a PEG contains such cases, you can use the `--testPEG` command line option
+(see below); if this option is set, *FuzzPEG* tries to parse each randomly generated program
+according to the given PEG and prints an error message in case of a failure.
+
+### Weighted Alternatives and Quantifiers
+
+To be able to control the probability that *FuzzPEG* chooses certain alternatives during the program
+construction, the alternatives can be annotated with a weight:
+
+
+    foo
+      : <13> ...
+      |  <3> ...
+      ;
+
+
+In this example, the probability that *FuzzPEG* chooses the first alternative of `foo` is (13 / (13
++ 3)), while the probability that it chooses the second one is only (3 / (13 + 3)).
+
+Similarly, it is possible to annotate quantifiers with a weight:
+
+
+    bar
+      : ( foo ) <3>+
+      ;
+
+
+During the program construction, *FuzzPEG* always ensures that the requirements induced by a
+quantifier are met (in the example, *FuzzPEG* ensures that at least one `foo` is generated due to
+the semantics of the `+` quantifier). However, if *FuzzPEG* can choose if it generates another
+element or not, the probability that it generates another one is determined by the given weight (in
+the example, another `foo` is generated with a probability of (3 / 4)). 
+
+Alternatives and quantifiers without explicit weight have an implicit weight of 1.
 
 ## License
 
