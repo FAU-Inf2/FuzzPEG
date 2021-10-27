@@ -189,6 +189,27 @@ the example, another `foo` is generated with a probability of (3 / 4)).
 
 Alternatives and quantifiers without explicit weight have an implicit weight of 1.
 
+
+## Grammar Graphs and Coverage
+
+A given PEG induces a bi-partite graph, which we refer to as *grammar graph* and which is the main
+data structure that *FuzzPEG* operates on (basically, *FuzzPEG* traverses this graph structure
+during the program construction). Each node of such a grammar graph is either a `Choice` (this
+includes all terminals and non-terminals of the grammar) or a `Sequence` (which, as the name
+implies, represent sequences in the grammar). The edges from a `Choice` to a `Sequence` are called
+`Alternative`s and the edges from a `Sequence` to a `Choice` are called `Element`s (such `Element`s
+are annotated with the respective quantifier from the grammar, if any).
+
+For the example PEG from above, the grammar graph looks as follows (rectangular nodes are `Choice`s
+and circular nodes are `Sequence`s):
+
+![grammar graph](graphics/grammar_graph.png)
+
+*FuzzPEG* can not only track which `Alternative`s (dashed arrows in the picture) have already been
+chosen (covered), but can also guide the generation process towards uncovered `Alternative`s (see
+below).
+
+
 ## License
 
 *FuzzPEG* is licensed under the terms of the MIT license (see [LICENSE.mit](LICENSE.mit)).
