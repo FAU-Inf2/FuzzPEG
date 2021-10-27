@@ -41,7 +41,7 @@ public final class RandomSelection implements SelectionStrategy {
         .map(Alternative::getWeight)
         .reduce(0, Integer::sum);
 
-    final int chosen = this.rng.nextInt(totalWeight) + 1;
+    final int chosen = this.rng.nextInt(totalWeight + 1);
     int weightSum = 0;
 
     for (final Alternative alternative : alternatives) {
