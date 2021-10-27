@@ -5,3 +5,5 @@ build/*
 .gradle/*
 
 out/
+
+graphics/grammar_graph.dot
