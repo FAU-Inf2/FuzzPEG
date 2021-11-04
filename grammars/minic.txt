@@ -29,9 +29,12 @@ block
 
 statement
   : IDENTIFIER ASSIGN expression SEMICOLON
+  | function_call SEMICOLON
   | IF LPAREN expression RPAREN block ( ELSE block )?
+  | WHILE LPAREN expression RPAREN block
   | RETURN ( expression )? SEMICOLON
   | variable_declaration
+  | block
   ;
 
 type_name
@@ -97,6 +100,7 @@ VOID: 'void' ;
 INT: 'int' ;
 IF: 'if' ;
 ELSE: 'else' ;
+WHILE: 'while' ;
 RETURN: 'return' ;
 SEMICOLON: ';' ;
 ASSIGN: '=' ;
