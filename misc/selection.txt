@@ -1,0 +1,45 @@
+selection_strategy
+  : random
+  | uniform
+  | smallest
+  | uncovered
+  | reaches_uncovered
+  ;
+
+random
+  : RAND ( LPAREN RPAREN )?
+  ;
+
+uniform
+  : UNIFORM ( LPAREN RPAREN )?
+  ;
+
+smallest
+  : SMALL ( LPAREN ( ( PROBABILITY COMMA )? selection_strategy )? RPAREN )?
+  ;
+
+uncovered
+  : UNCOV LPAREN selection_strategy COMMA selection_strategy RPAREN
+  ;
+
+reaches_uncovered
+  : REACHESUNCOV LPAREN selection_strategy COMMA selection_strategy ( COMMA ( TRUE | FALSE ) )? RPAREN
+  ;
+
+LPAREN: '(' ;
+RPAREN: ')' ;
+COMMA: ',' ;
+
+RAND: 'rand' ('om')? ;
+UNIFORM: 'uniform' ;
+SMALL: 'small' ('est')? ;
+UNCOV: 'uncov' ('ered')? ;
+REACHESUNCOV: 'reachesUncov' ('ered')? ;
+
+TRUE: 'true' ;
+FALSE: 'false' ;
+
+PROBABILITY: '1.0' | '0.' [0-9]+ ;
+
+@skip
+SPACE: ( ' ' | '\t' | '\r' | '\n' )+ ;
