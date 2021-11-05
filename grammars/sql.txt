@@ -206,7 +206,7 @@ is_expr
 
 in_expr
   : null_expr
-      ( ( NOT )? IN ( ( database_name DOT )? table_name ) | LPAREN ( select_statement | expr ( COMMA expr )* )? RPAREN )*
+      ( ( NOT )? IN ( ( database_name DOT )? table_name | LPAREN ( expr ( COMMA expr )* | select_statement )? RPAREN ) )*
   ;
 
 null_expr
