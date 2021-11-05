@@ -70,18 +70,16 @@ public final class FuzzPEG {
     argumentsParser = new ProgramArgumentsParser();
 
     argumentsParser.addOption(OPTION_GRAMMAR, true, true, "<path to grammar>");
-    argumentsParser.addOption(OPTION_MAX_HEIGHT, false, true, "<max. height>");
+    argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
+    argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
 
     argumentsParser.addOption(OPTION_SELECTION, false, true, "<selection strategy>");
 
-    argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
-    argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
-    argumentsParser.addOption(OPTION_PRINT_MIN_MAX_HEIGHT, false);
-    argumentsParser.addOption(OPTION_PRINT_REACHABLE_CHOICES, false);
-    argumentsParser.addOption(OPTION_PRINT_UNCOVERED, false);
+    argumentsParser.addOption(OPTION_MAX_HEIGHT, false, true, "<max. height>");
 
-    argumentsParser.addOption(OPTION_SEED, false, true, "<seed>");
-    argumentsParser.addOption(OPTION_COUNT, false, true, "<count>");
+    argumentsParser.addOption(OPTION_OUT, false, true, "<file name pattern>");
+    argumentsParser.addOption(OPTION_DOT, false, true, "<file name pattern>");
+
     argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
 
     argumentsParser.addOption(OPTION_ONLY_ADDITIONAL_COVERAGE, false);
@@ -89,10 +87,13 @@ public final class FuzzPEG {
 
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
 
-    argumentsParser.addOption(OPTION_OUT, false, true, "<file name pattern>");
-    argumentsParser.addOption(OPTION_DOT, false, true, "<file name pattern>");
-
     argumentsParser.addOption(OPTION_TEST_PEG, false);
+
+    argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
+    argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
+    argumentsParser.addOption(OPTION_PRINT_MIN_MAX_HEIGHT, false);
+    argumentsParser.addOption(OPTION_PRINT_REACHABLE_CHOICES, false);
+    argumentsParser.addOption(OPTION_PRINT_UNCOVERED, false);
   }
 
   public static final void main(final String[] args) {
