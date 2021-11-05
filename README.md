@@ -199,16 +199,16 @@ according to the given PEG and prints an error message in case of a failure.
 
 ## Grammar Graphs and Coverage
 
-A given PEG induces a bi-partite graph, which we refer to as *grammar graph* and which is the main
-data structure that *FuzzPEG* operates on (basically, *FuzzPEG* traverses this graph structure
+The input grammar induces a bi-partite graph, which we refer to as *grammar graph* and which is the
+main data structure that *FuzzPEG* operates on (basically, *FuzzPEG* traverses this graph structure
 during the program construction). Each node of such a grammar graph is either a `Choice` (this
 includes all terminals and non-terminals of the grammar) or a `Sequence` (which, as the name
 implies, represent sequences in the grammar). The edges from a `Choice` to a `Sequence` are called
 `Alternative`s and the edges from a `Sequence` to a `Choice` are called `Element`s (such `Element`s
 are annotated with the respective quantifier from the grammar, if any).
 
-For the example PEG from above, the grammar graph looks as follows (rectangular nodes are `Choice`s
-and circular nodes are `Sequence`s):
+For the example grammar from above, the grammar graph looks as follows (rectangular nodes are
+`Choice`s and circular nodes are `Sequence`s):
 
 ![grammar graph](graphics/grammar_graph.png)
 
