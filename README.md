@@ -1,10 +1,9 @@
 FuzzPEG: A Context-Free Random Program Generator
 ================================================
 
-*FuzzPEG* is a random program generator. It takes as input a context-free grammar (to be more
-precise, a so-called Parsing Expression Grammar, PEG) and efficiently generates syntactically valid
-programs for it. These programs can then be used to detect bugs in compilers and other language
-processors.
+*FuzzPEG* is a random program generator. It takes as input a context-free grammar in EBNF and
+efficiently generates syntactically valid programs for it. These programs can then be used to detect
+bugs in compilers and other language processors.
 
 To make *FuzzPEG* usable for practical purposes, it offers some advanced features:
 
@@ -53,12 +52,13 @@ file `build/libs/FuzzPEG.jar`. The instructions below assume that this file exis
 - Building *FuzzPEG* requires an internet connection to resolve external dependencies.
 
 
-## Parsing Expression Grammars (PEGs)
+## Input Grammars
 
-*FuzzPEG* takes as input a *Parsing Expression Grammar* (PEG) that describes the lexical and
-syntactical rules that the generated programs should conform to. The following is an example for
-such a PEG in the notation of the [j-PEG](https://github.com/FAU-Inf2/j-PEG) library that *FuzzPEG*
-uses:
+*FuzzPEG* takes as input a context-free grammar that describes the lexical and syntactical rules
+that the generated programs should conform to. The following is an example for such a grammar in the
+notation of the [j-PEG](https://github.com/FAU-Inf2/j-PEG) library that *FuzzPEG* uses (to be more
+precise, the grammars that *j-PEG* takes as input are so-called Parsing Expression Grammars (PEGs);
+see [below](#a-note-on-grammar-classes) for a more detailed discussion):
 
 
     calculation: statement* EOF ;
@@ -128,36 +128,6 @@ The right hand side of a non-terminal rule uses a notation similar to that of EB
 
 Use the choice operator `|` to specify alternatives.
 
-**IMPORTANT**: In contrast to "traditional" context-free grammars in EBNF, the choice operator of
-PEGs is *ordered* (i.e., if the first alternative matches during parsing, the second one is
-ignored). This introduces a potential problem which is somewhat similar to ambiguous grammars: since
-*FuzzPEG* chooses alternatives randomly and "locally", it is possible that the programs generated
-from a PEG **cannot be parsed** with a parser for this PEG (but other parsing algorithms might be
-able to successfully parse them). For example, consider the following PEG:
-
-
-    foo: A | A B ;
-    A: 'A' ;
-    B: 'B' ;
-
-
-*FuzzPEG* may generate the program `AB`, which cannot be parsed with this PEG: since the choice
-operator is ordered, the parser strictly applies the first alternative of `foo` to match the `A` in
-`AB`, after which a single `B` remains that cannot be parsed. Whether this is a problem or not
-depends on your use case. If your goal is to generate programs that can be parsed according to the
-given PEG, you have to rewrite the PEG such that it does not include such cases. In the example, the
-following PEG can be used instead:
-
-
-    foo: A B | A ;
-    A: 'A' ;
-    B: 'B' ;
-
-
-If you are unsure whether a PEG contains such cases, you can use the `--testPEG` command line option
-(see below); if this option is set, *FuzzPEG* tries to parse each randomly generated program
-according to the given PEG and prints an error message in case of a failure.
-
 ### Weighted Alternatives and Quantifiers
 
 To be able to control the probability that *FuzzPEG* chooses certain alternatives during the program
@@ -188,6 +158,43 @@ element or not, the probability that it generates another one is determined by t
 the example, another `foo` is generated with a probability of (3 / 4)).
 
 Alternatives and quantifiers without explicit weight have an implicit weight of 1.
+
+### A Note on Grammar Classes
+
+*FuzzPEG* does not check (or care) which grammar class the input grammar belongs to (or if it is
+ambiguous or not). In particular, although the [j-PEG](https://github.com/FAU-Inf2/j-PEG) library
+that *FuzzPEG* uses treats the input grammar as a so-called *Parsing Expression Grammar* (PEG), it
+is possible that the programs generated with *FuzzPEG* cannot be parsed successfully with a parser
+for this PEG (but other parsing algorithms might be able to successfully parse them). This is due to
+the fact that (in contrast to "traditional" context-free grammars in EBNF) the choice operator (`|`)
+of PEGs is *ordered* (i.e., if the first alternative matches during parsing, the second one is
+ignored). For example, consider the following PEG:
+
+
+    foo: A | A B ;
+    A: 'A' ;
+    B: 'B' ;
+
+
+Since *FuzzPEG* chooses alternatives randomly and "locally", *FuzzPEG* may generate the program
+`AB`, which cannot be parsed according to this PEG: since the choice operator is ordered, the parser
+strictly applies the first alternative of `foo` to match the `A` in `AB`, after which a single `B`
+remains that cannot be parsed.
+
+Whether this is a problem or not depends on your use case. If your goal is to generate programs that
+can be parsed according to the given PEG, you have to rewrite the PEG such that it does not include
+such cases. In the example, the following PEG can be used instead:
+
+
+    foo: A B | A ;
+    A: 'A' ;
+    B: 'B' ;
+
+
+If you are unsure whether a PEG contains such cases, you can use the `--testPEG` command line option
+(see below); if this option is set, *FuzzPEG* tries to parse each randomly generated program
+according to the given PEG and prints an error message in case of a failure.
+
 
 
 ## Grammar Graphs and Coverage
