@@ -1,6 +1,6 @@
-calculation: ( statement ) * EOF ;
+calculation: ( statement ) <20>* EOF ;
 
-statement: ( VAR_NAME ASSIGN )? expression SEMICOLON ;
+statement: ( VAR_NAME ASSIGN ) <5>? expression SEMICOLON ;
 
 expression: add_expression ;
 
