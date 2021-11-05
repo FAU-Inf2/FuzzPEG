@@ -192,9 +192,9 @@ such cases. In the example, the following PEG can be used instead:
 
 
 If you are unsure whether a PEG contains such cases, you can use the `--testPEG` command line option
-(see below); if this option is set, *FuzzPEG* tries to parse each randomly generated program
-according to the given PEG and prints an error message in case of a failure.
-
+(see [below](#generating-random-programs-with-fuzzpeg)); if this option is set, *FuzzPEG* tries to
+parse each randomly generated program according to the given PEG and prints an error message in case
+of a failure.
 
 
 ## Grammar Graphs and Coverage
@@ -216,6 +216,41 @@ For the example grammar from above, the grammar graph looks as follows (rectangu
 chosen (covered), but can also guide the generation process towards uncovered `Alternative`s (see
 below).
 
+
+## Generating Random Programs With FuzzPEG
+
+To just generate a single random program for a given grammar and to print it to stdout, simply call
+the `run.sh` helper script and pass the path to the grammar file as argument:
+
+    ./run.sh --grammar grammars/calculation.txt
+
+In addition, *FuzzPEG* takes the following (optional) command line arguments:
+
+- `--count <number>`: Specifies the number of programs that should be generated.
+- `--seed <value>`: Specifies the initial random seed for the program generation.
+- `--selection <selection strategy>`: Specifies the strategy that *FuzzPEG* should use to select
+  alternatives and to determine the number of elements of quantified sub-rules. The following
+  strategies are currently supported (the possible options are also described in
+  `misc/selection.txt`):
+  - `rand`: A weighted random selection based on the
+    [weights](#weighted-alternatives-and-quantifiers) given in the input grammar.
+  - `uniform`: A uniform random selection.
+  - `small(<probability>, <base strategy>)` (where `<probability>` is a number between `0.0` and
+    `1.0` and `<base strategy>` is another selection strategy): Chooses the alternative that leads
+    to the smallest possible sub-tree with the specified `<probability>` (and uses the `<base
+    strategy>` to select an alternative with a probability of `1-<probability>`). Thus, a larger
+    `<probability>` generally leads to smaller programs.
+  - `uncov(<strategy uncovered>, <strategy covered>)` (where `<strategy uncovered>` and `<strategy
+    covered>` are other selection strategies): If there are uncovered alternatives, the `<strategy
+    uncovered>` is used to select one of them; otherwise, the `<strategy covered>` is used to select
+    one of the (already covered) alternatives.
+  - `reachesUncov(<strategy uncovered>, <strategy covered>, <strict quantifiers>)` (where `<strategy
+    uncovered>` and `<strategy covered>` are other selection strategies and `<strict quantifiers>`
+    is either `true` or `false`): If there are alternatives that are still uncovered or that may
+    lead to uncovered alternatives further down in the tree, the `<strategy uncovered>` is used to
+    select one of them; otherwise, the `<strategy covered>` is used to select one of the
+    alternatives. If `<strict quantifiers>` is set to `true`, another element of a quantified
+    sub-rule is generated if (and only if) this may lead to still uncovered alternatives.
 
 ## License
 
