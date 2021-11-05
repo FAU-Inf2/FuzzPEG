@@ -34,6 +34,7 @@ public final class SelectionStrategyParser {
     final LexerSymbol RPAREN = builder.define("RPAREN", "')'");
     final LexerSymbol COMMA = builder.define("COMMA", "','");
     final LexerSymbol RAND = builder.define("RAND", "[Rr][Aa][Nn][Dd] ( [Oo][Mm] )?");
+    final LexerSymbol UNIFORM = builder.define("UNIFORM", "[Uu][Nn][Ii][Ff][Oo][Rr][Mm]");
     final LexerSymbol SMALL = builder.define("SMALL", "[Ss][Mm][Aa][Ll][Ll] ( [Ee][Ss][Tt] )?");
     final LexerSymbol UNCOV = builder.define("UNCOV", "[Uu][Nn][Cc][Oo][Vv] ( [Ee][Rr][Ee][Dd] )?");
     final LexerSymbol REACHESUNCOV = builder.define(
@@ -46,6 +47,7 @@ public final class SelectionStrategyParser {
     final ParserSymbol root = builder.declare("root");
     final ParserSymbol selection_strategy = builder.declare("selection_strategy");
     final ParserSymbol random = builder.declare("random");
+    final ParserSymbol uniform = builder.declare("uniform");
     final ParserSymbol smallest = builder.declare("smallest");
     final ParserSymbol uncovered = builder.declare("uncovered");
     final ParserSymbol reaches_uncovered = builder.declare("reaches_uncovered");
@@ -54,10 +56,13 @@ public final class SelectionStrategyParser {
         seq(selection_strategy, LexerSymbol.EOF));
 
     builder.define(selection_strategy,
-        seq(alt(random, smallest, uncovered, reaches_uncovered)));
+        seq(alt(random, uniform, smallest, uncovered, reaches_uncovered)));
 
     builder.define(random,
         seq(RAND, opt(seq(LPAREN, RPAREN))));
+
+    builder.define(uniform,
+        seq(UNIFORM, opt(seq(LPAREN, RPAREN))));
 
     builder.define(smallest,
         seq(SMALL,
@@ -77,7 +82,12 @@ public final class SelectionStrategyParser {
 
     // random
     visitor.add(random, (node, _void) -> {
-      return new RandomSelection(rng);
+      return new WeightedRandomSelection(rng);
+    });
+
+    // uniform
+    visitor.add(uniform, (node, _void) -> {
+      return new UniformRandomSelection(rng);
     });
 
     // smallest
@@ -86,7 +96,7 @@ public final class SelectionStrategyParser {
       final double probability;
       {
         if (node.numberOfChildren() == 1 || node.numberOfChildren() == 3) {
-          baseStrategy = new RandomSelection(rng);
+          baseStrategy = new WeightedRandomSelection(rng);
           probability = 1.0;
         } else if (node.numberOfChildren() == 4) {
           baseStrategy = visitor.visit(node.getChild(2));

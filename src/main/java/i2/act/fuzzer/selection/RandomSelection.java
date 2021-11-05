@@ -6,7 +6,7 @@ import i2.act.grammargraph.GrammarGraphEdge.Element;
 import java.util.List;
 import java.util.Random;
 
-public final class RandomSelection implements SelectionStrategy {
+public abstract class RandomSelection implements SelectionStrategy {
 
   private final Random rng;
 
@@ -38,14 +38,14 @@ public final class RandomSelection implements SelectionStrategy {
 
     // roulette wheel selection
     final int totalWeight = alternatives.stream()
-        .map(Alternative::getWeight)
+        .map(alternative -> getWeight(alternative))
         .reduce(0, Integer::sum);
 
     final int chosen = this.rng.nextInt(totalWeight + 1);
     int weightSum = 0;
 
     for (final Alternative alternative : alternatives) {
-      weightSum += alternative.getWeight();
+      weightSum += getWeight(alternative);
 
       if (weightSum >= chosen) {
         return alternative;
@@ -59,7 +59,11 @@ public final class RandomSelection implements SelectionStrategy {
   @Override
   public final boolean generateMoreElements(final Element element, final int count,
       final int maxHeight) {
-    return this.rng.nextInt(element.getWeight() + 1) != 0;
+    return this.rng.nextInt(getWeight(element) + 1) != 0;
   }
+
+  protected abstract int getWeight(final Alternative alternative);
+
+  protected abstract int getWeight(final Element element);
 
 }

@@ -229,7 +229,7 @@ public final class FuzzPEG {
           return;
         }
       } else {
-        selectionStrategy = new RandomSelection(rng);
+        selectionStrategy = new WeightedRandomSelection(rng);
       }
 
       assert (selectionStrategy != null);
