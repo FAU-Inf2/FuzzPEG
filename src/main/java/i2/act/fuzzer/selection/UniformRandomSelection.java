@@ -28,4 +28,5 @@ public final class UniformRandomSelection extends RandomSelection {
   protected final int getWeight(final Element element) {
     return 1;
   }
+
 }

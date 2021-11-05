@@ -28,4 +28,5 @@ public final class WeightedRandomSelection extends RandomSelection {
   protected final int getWeight(final Element element) {
     return element.getWeight();
   }
+
 }
