@@ -303,7 +303,7 @@ A typical run of *FuzzPEG* might look as follows:
     ./run.sh --grammar grammars/c.txt \
       --seed 0 --count 100 \
       --selection 'reachesUncov(rand, small, true)' \
-      --resetCoverage
+      --resetCoverage \
       --out out/prog_#{INDEX}.c
 
 ## License
