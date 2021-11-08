@@ -286,7 +286,7 @@ In addition, *FuzzPEG* takes the following (optional) command line arguments:
   generated with *FuzzPEG* cannot be parsed with a parser for the input PEG. If the `--testPEG`
   option is set, *FuzzPEG* tries to parse the generated programs and prints an error message in case
   of a failure. This can be used to check if the PEG is "unambiguous".
-- `--printGG`: If this option is set, a Dot descirption for the input grammar's
+- `--printGG`: If this option is set, a Dot description for the input grammar's
   [grammar graph](#grammar-graphs-and-coverage) is written to stdout.
 - `--printMinHeights`: If this option is set, *FuzzPEG* prints for each `Choice` in the input
   grammar the minimum height of a subtree rooted at this `Choice`.
