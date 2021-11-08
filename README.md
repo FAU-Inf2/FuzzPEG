@@ -227,7 +227,8 @@ the `run.sh` helper script and pass the path to the grammar file as argument:
 In addition, *FuzzPEG* takes the following (optional) command line arguments:
 
 - `--count <number>`: Specifies the number of programs that should be generated.
-- `--seed <value>`: Specifies the initial random seed for the program generation.
+- `--seed <value>`: Specifies the initial random seed for the program generation. If multiple
+  programs are generated, the seed is increased by one for each program.
 - `--selection <selection strategy>`: Specifies the strategy that *FuzzPEG* should use to select
   alternatives and to determine the number of elements of quantified sub-rules. The following
   strategies are currently supported (the possible options are also described in
@@ -237,20 +238,73 @@ In addition, *FuzzPEG* takes the following (optional) command line arguments:
   - `uniform`: A uniform random selection.
   - `small(<probability>, <base strategy>)` (where `<probability>` is a number between `0.0` and
     `1.0` and `<base strategy>` is another selection strategy): Chooses the alternative that leads
-    to the smallest possible sub-tree with the specified `<probability>` (and uses the `<base
+    to the smallest possible subtree with the specified `<probability>` (and uses the `<base
     strategy>` to select an alternative with a probability of `1-<probability>`). Thus, a larger
-    `<probability>` generally leads to smaller programs.
+    `<probability>` generally leads to smaller programs. Note that the `<probability>` and
+    `<base strategy>` can also be omitted; in this case, *FuzzPEG* strictly chooses one of the
+    alternatives that lead to the smallest possible tree at random.
   - `uncov(<strategy uncovered>, <strategy covered>)` (where `<strategy uncovered>` and `<strategy
-    covered>` are other selection strategies): If there are uncovered alternatives, the `<strategy
-    uncovered>` is used to select one of them; otherwise, the `<strategy covered>` is used to select
-    one of the (already covered) alternatives.
+    covered>` are other selection strategies): If the current `Choice` has uncovered alternatives,
+    the `<strategy uncovered>` is used to select one of them; otherwise, the `<strategy covered>` is
+    used to select one of the (already covered) alternatives.
   - `reachesUncov(<strategy uncovered>, <strategy covered>, <strict quantifiers>)` (where `<strategy
     uncovered>` and `<strategy covered>` are other selection strategies and `<strict quantifiers>`
-    is either `true` or `false`): If there are alternatives that are still uncovered or that may
-    lead to uncovered alternatives further down in the tree, the `<strategy uncovered>` is used to
-    select one of them; otherwise, the `<strategy covered>` is used to select one of the
+    is either `true` or `false`): If the current `Choice` has alternatives that are still uncovered
+    or that may lead to uncovered alternatives further down in the tree, the `<strategy uncovered>`
+    is used to select one of them; otherwise, the `<strategy covered>` is used to select one of the
     alternatives. If `<strict quantifiers>` is set to `true`, another element of a quantified
     sub-rule is generated if (and only if) this may lead to still uncovered alternatives.
+- `--maxHeight <value>`: Specifies the height limit for the generated program trees; *FuzzPEG*
+  prints a warning if the specified limit does not suffice to cover all possible alternatives (and
+  terminates with an error if the specified limit does not suffice to generate any program at all).
+  If this option is not set, *FuzzPEG* automatically chooses a height limit that suffices to cover
+  all alternatives.
+- `--out <file name pattern>`: If this option is set, the generated programs are written to disk
+  (instead of stdout). The given `<file name pattern>` may include the following placeholders, which
+  are expanded for each program individually:
+  - `#{INDEX}`: The number of the generated program (starting at 0).
+  - `#{SEED}`: The random seed that was used for the program generation.
+  - `#{MAX_HEIGHT}`: The height limit that was used for the program generation.
+  - `#{BATCH}`: The generated programs can be split into batches to ease the handling of the
+    generated files (also see `--batchSize` below). The `#{BATCH}` placeholder is replaced by the
+    number of the batch that the respective program belongs to.
+- `--dot <file name pattern>`: If this option is set, a Dot description is generated for each
+  program's syntax tree. The `<file name pattern>` may use the same placeholders as the pattern for
+  the `--out` option.
+- `--batchSize <size>`: Number of programs that each batch consists of; only useful in combination
+  with the `#{BATCH}` placeholder for file name patterns.
+- `--onlyAdditionalCoverage`: If this option is set, all generated programs that do not add any
+  additional [coverage](#grammar-graphs-and-coverage) are discarded; when all alternatives have been
+  covered (or if the maximum number of programs as specified via the `--count` command line option
+  is reached), the program generation terminates (unless the `--resetCoverage` option is set, see
+  below).
+- `--resetCoverage`: If this option is set, the coverage is reset when all alternatives have been
+  covered.
+- `--join <separator>`: Specifies the separator that two adjacent tokens should be separated with in
+  the serialized output (if necessary); the default separator consists of a single space.
+- `--testPEG`: As explained [above](#a-note-on-grammar-classes), it is possible that the programs
+  generated with *FuzzPEG* cannot be parsed with a parser for the input PEG. If the `--testPEG`
+  option is set, *FuzzPEG* tries to parse the generated programs and prints an error message in case
+  of a failure. This can be used to check if the PEG is "unambiguous".
+- `--printGG`: If this option is set, a Dot descirption for the input grammar's
+  [grammar graph](#grammar-graphs-and-coverage) is written to stdout.
+- `--printMinHeights`: If this option is set, *FuzzPEG* prints for each `Choice` in the input
+  grammar the minimum height of a subtree rooted at this `Choice`.
+- `--printMinMaxHeight`: If this option is set, *FuzzPEG* prints the minimum height limit (see
+  `--maxHeight`) that suffices to cover all alternatives of the given input grammar.
+- `--printReachableChoices`: If this option is set, *FuzzPEG* prints for each `Choice` in the input
+  grammar which other `Choice`s are reachable from it (and the minimum number of `Choice`s
+  inbetween).
+- `--printUncovered`: If this option is set, *FuzzPEG* prints a list of alternatives that have not
+  been covered at the end of the fuzzer run.
+
+A typical run of *FuzzPEG* might look as follows:
+
+    ./run.sh --grammar grammars/c.txt \
+      --seed 0 --count 100 \
+      --selection 'reachesUncov(rand, small, true)' \
+      --resetCoverage
+      --out out/prog_#{INDEX}.c
 
 ## License
 
