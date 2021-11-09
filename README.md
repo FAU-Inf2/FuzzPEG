@@ -214,7 +214,7 @@ For the example grammar from above, the grammar graph looks as follows (rectangu
 
 *FuzzPEG* can not only track which `Alternative`s (dashed arrows in the picture) have already been
 chosen (covered), but can also guide the generation process towards uncovered `Alternative`s (see
-below).
+[below](#selection-strategy)).
 
 
 ## Generating Random Programs With FuzzPEG
