@@ -273,7 +273,8 @@ sub-rules. The following strategies are currently supported (the possible option
 in `misc/selection.txt`):
 
 - `rand`: A weighted random selection based on the [weights](#weighted-alternatives-and-quantifiers)
-  given in the input grammar.
+  given in the input grammar. This is the default strategy if the `--selection` command line option
+  is not set.
 - `uniform`: A uniform random selection.
 - `small(<probability>, <base strategy>)` (where `<probability>` is a number between `0.0` and `1.0`
   and `<base strategy>` is another selection strategy): Chooses the alternative that leads to the
