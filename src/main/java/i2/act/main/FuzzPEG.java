@@ -42,18 +42,16 @@ public final class FuzzPEG {
   private static final ProgramArgumentsParser argumentsParser;
 
   private static final String OPTION_GRAMMAR = "--grammar";
-  private static final String OPTION_MAX_HEIGHT = "--maxHeight";
+  private static final String OPTION_COUNT = "--count";
+  private static final String OPTION_SEED = "--seed";
 
   private static final String OPTION_SELECTION = "--selection";
 
-  private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
-  private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
-  private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
-  private static final String OPTION_PRINT_REACHABLE_CHOICES = "--printReachableChoices";
-  private static final String OPTION_PRINT_UNCOVERED = "--printUncovered";
+  private static final String OPTION_MAX_HEIGHT = "--maxHeight";
 
-  private static final String OPTION_SEED = "--seed";
-  private static final String OPTION_COUNT = "--count";
+  private static final String OPTION_OUT = "--out";
+  private static final String OPTION_DOT = "--dot";
+
   private static final String OPTION_BATCH_SIZE = "--batchSize";
 
   private static final String OPTION_ONLY_ADDITIONAL_COVERAGE = "--onlyAdditionalCoverage";
@@ -61,10 +59,13 @@ public final class FuzzPEG {
 
   private static final String OPTION_JOIN = "--join";
 
-  private static final String OPTION_OUT = "--out";
-  private static final String OPTION_DOT = "--dot";
-
   private static final String OPTION_TEST_PEG = "--testPEG";
+
+  private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
+  private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
+  private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
+  private static final String OPTION_PRINT_REACHABLE_CHOICES = "--printReachableChoices";
+  private static final String OPTION_PRINT_UNCOVERED = "--printUncovered";
 
   static {
     argumentsParser = new ProgramArgumentsParser();
