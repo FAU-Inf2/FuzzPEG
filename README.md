@@ -222,43 +222,83 @@ below).
 To just generate a single random program for a given grammar and to print it to stdout, simply call
 the `run.sh` helper script and pass the path to the grammar file as argument:
 
-    ./run.sh --grammar grammars/calculation.txt
+    ./run.sh --grammar grammars/c.txt
 
-In addition, *FuzzPEG* takes the following (optional) command line arguments:
+A more typical run of *FuzzPEG* might look as follows:
+
+    ./run.sh --grammar grammars/c.txt \
+      --seed 0 --count 100 \
+      --selection 'reachesUncov(rand, small, true)' \
+      --resetCoverage \
+      --out out/prog_#{INDEX}.c
+
+In this case, *FuzzPEG* generates 100 programs (using an initial random seed of 0) and writes them
+to `out/prog_#{INDEX}.c` (where `#{INDEX}` is replaced by the index of each program). During the
+program generation *FuzzPEG* favors alternatives that have not been covered yet or that may lead to
+other uncovered alternatives (`--selection`). Once full coverage has been reached, *FuzzPEG* resets
+the coverage such that the following program generations try to cover all alternatives again
+(`--resetCoverage`).
+
+The following sections give a more detailed overview of the command line options that *FuzzPEG*
+supports.
+
+### General Options
+
+*FuzzPEG* supports the following command line options that configure some general properties of the
+program generation:
 
 - `--count <number>`: Specifies the number of programs that should be generated.
 - `--seed <value>`: Specifies the initial random seed for the program generation. If multiple
   programs are generated, the seed is increased by one for each program.
-- `--selection <selection strategy>`: Specifies the strategy that *FuzzPEG* should use to select
-  alternatives and to determine the number of elements of quantified sub-rules. The following
-  strategies are currently supported (the possible options are also described in
-  `misc/selection.txt`):
-  - `rand`: A weighted random selection based on the
-    [weights](#weighted-alternatives-and-quantifiers) given in the input grammar.
-  - `uniform`: A uniform random selection.
-  - `small(<probability>, <base strategy>)` (where `<probability>` is a number between `0.0` and
-    `1.0` and `<base strategy>` is another selection strategy): Chooses the alternative that leads
-    to the smallest possible subtree with the specified `<probability>` (and uses the `<base
-    strategy>` to select an alternative with a probability of `1-<probability>`). Thus, a larger
-    `<probability>` generally leads to smaller programs. Note that the `<probability>` and
-    `<base strategy>` can also be omitted; in this case, *FuzzPEG* strictly chooses one of the
-    alternatives that lead to the smallest possible tree at random.
-  - `uncov(<strategy uncovered>, <strategy covered>)` (where `<strategy uncovered>` and `<strategy
-    covered>` are other selection strategies): If the current `Choice` has uncovered alternatives,
-    the `<strategy uncovered>` is used to select one of them; otherwise, the `<strategy covered>` is
-    used to select one of the (already covered) alternatives.
-  - `reachesUncov(<strategy uncovered>, <strategy covered>, <strict quantifiers>)` (where `<strategy
-    uncovered>` and `<strategy covered>` are other selection strategies and `<strict quantifiers>`
-    is either `true` or `false`): If the current `Choice` has alternatives that are still uncovered
-    or that may lead to uncovered alternatives further down in the tree, the `<strategy uncovered>`
-    is used to select one of them; otherwise, the `<strategy covered>` is used to select one of the
-    alternatives. If `<strict quantifiers>` is set to `true`, another element of a quantified
-    sub-rule is generated if (and only if) this may lead to still uncovered alternatives.
 - `--maxHeight <value>`: Specifies the height limit for the generated program trees; *FuzzPEG*
   prints a warning if the specified limit does not suffice to cover all possible alternatives (and
   terminates with an error if the specified limit does not suffice to generate any program at all).
   If this option is not set, *FuzzPEG* automatically chooses a height limit that suffices to cover
   all alternatives.
+- `--onlyAdditionalCoverage`: If this option is set, all generated programs that do not add any
+  additional [coverage](#grammar-graphs-and-coverage) are discarded; when all alternatives have been
+  covered (or if the maximum number of programs as specified via the `--count` command line option
+  is reached), the program generation terminates (unless the `--resetCoverage` option is set, see
+  below).
+- `--resetCoverage`: If this option is set, the coverage is reset when all alternatives have been
+  covered.
+- `--join <separator>`: Specifies the separator that two adjacent tokens should be separated with in
+  the serialized output (if necessary); the default separator consists of a single space.
+
+### Selection Strategy
+
+Use the command line option `--selection <selection strategy>` to specify the strategy that
+*FuzzPEG* should use to select alternatives and to determine the number of elements of quantified
+sub-rules. The following strategies are currently supported (the possible options are also described
+in `misc/selection.txt`):
+
+- `rand`: A weighted random selection based on the [weights](#weighted-alternatives-and-quantifiers)
+  given in the input grammar.
+- `uniform`: A uniform random selection.
+- `small(<probability>, <base strategy>)` (where `<probability>` is a number between `0.0` and `1.0`
+  and `<base strategy>` is another selection strategy): Chooses the alternative that leads to the
+  smallest possible subtree with the specified `<probability>` (and uses the `<base strategy>` to
+  select an alternative with a probability of `1-<probability>`). Thus, a larger `<probability>`
+  generally leads to smaller programs. Note that the `<probability>` and `<base strategy>` can also
+  be omitted; in this case, *FuzzPEG* strictly chooses one of the alternatives that lead to the
+  smallest possible tree at random.
+- `uncov(<strategy uncovered>, <strategy covered>)` (where `<strategy uncovered>` and `<strategy
+  covered>` are other selection strategies): If the current `Choice` has uncovered alternatives, the
+  `<strategy uncovered>` is used to select one of them; otherwise, the `<strategy covered>` is used
+  to select one of the (already covered) alternatives.
+- `reachesUncov(<strategy uncovered>, <strategy covered>, <strict quantifiers>)` (where `<strategy
+  uncovered>` and `<strategy covered>` are other selection strategies and `<strict quantifiers>` is
+  either `true` or `false`): If the current `Choice` has alternatives that are still uncovered or
+  that may lead to uncovered alternatives further down in the tree, the `<strategy uncovered>` is
+  used to select one of them; otherwise, the `<strategy covered>` is used to select one of the
+  alternatives. If `<strict quantifiers>` is set to `true`, another element of a quantified sub-rule
+  is generated if (and only if) this may lead to still uncovered alternatives.
+
+### Output Options
+
+Use the following command line options to write the generated programs or their syntax trees to
+disk:
+
 - `--out <file name pattern>`: If this option is set, the generated programs are written to disk
   (instead of stdout). The given `<file name pattern>` may include the following placeholders, which
   are expanded for each program individually:
@@ -273,15 +313,11 @@ In addition, *FuzzPEG* takes the following (optional) command line arguments:
   the `--out` option.
 - `--batchSize <size>`: Number of programs that each batch consists of; only useful in combination
   with the `#{BATCH}` placeholder for file name patterns.
-- `--onlyAdditionalCoverage`: If this option is set, all generated programs that do not add any
-  additional [coverage](#grammar-graphs-and-coverage) are discarded; when all alternatives have been
-  covered (or if the maximum number of programs as specified via the `--count` command line option
-  is reached), the program generation terminates (unless the `--resetCoverage` option is set, see
-  below).
-- `--resetCoverage`: If this option is set, the coverage is reset when all alternatives have been
-  covered.
-- `--join <separator>`: Specifies the separator that two adjacent tokens should be separated with in
-  the serialized output (if necessary); the default separator consists of a single space.
+
+### Test Options
+
+*FuzzPEG* supports the following command line options to evaluate the generated programs:
+
 - `--findBugs <test command>` (requires the `--out` command line option): If this option is set,
   *FuzzPEG* checks for each generated program if it triggers a bug (and only keeps those programs
   that trigger a bug). To this end, *FuzzPEG* executes the given `<test command>` (the program's
@@ -291,6 +327,12 @@ In addition, *FuzzPEG* takes the following (optional) command line arguments:
   generated with *FuzzPEG* cannot be parsed with a parser for the input PEG. If the `--testPEG`
   option is set, *FuzzPEG* tries to parse the generated programs and prints an error message in case
   of a failure. This can be used to check if the PEG is "unambiguous".
+
+### Output of Additional Information  
+
+The following command line options can be used to print additional information related to the input
+grammar and the fuzzing results:
+
 - `--printGG`: If this option is set, a Dot description for the input grammar's
   [grammar graph](#grammar-graphs-and-coverage) is written to stdout.
 - `--printMinHeights`: If this option is set, *FuzzPEG* prints for each `Choice` in the input
@@ -302,14 +344,6 @@ In addition, *FuzzPEG* takes the following (optional) command line arguments:
   inbetween).
 - `--printUncovered`: If this option is set, *FuzzPEG* prints a list of alternatives that have not
   been covered at the end of the fuzzer run.
-
-A typical run of *FuzzPEG* might look as follows:
-
-    ./run.sh --grammar grammars/c.txt \
-      --seed 0 --count 100 \
-      --selection 'reachesUncov(rand, small, true)' \
-      --resetCoverage \
-      --out out/prog_#{INDEX}.c
 
 ## License
 
