@@ -19,6 +19,9 @@ import i2.act.peg.ast.Grammar;
 import i2.act.peg.ast.visitors.NameAnalysis;
 import i2.act.peg.parser.PEGParser;
 import i2.act.peg.symbols.Symbol;
+import i2.act.test.ExternalTestFunction;
+import i2.act.test.TestFunction;
+import i2.act.util.ArgumentSplitter;
 import i2.act.util.FileUtil;
 import i2.act.util.SafeWriter;
 import i2.act.util.options.ProgramArguments;
@@ -59,6 +62,8 @@ public final class FuzzPEG {
 
   private static final String OPTION_JOIN = "--join";
 
+  private static final String OPTION_FIND_BUGS = "--findBugs";
+
   private static final String OPTION_TEST_PEG = "--testPEG";
 
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
@@ -87,6 +92,8 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_RESET_COVERAGE, false);
 
     argumentsParser.addOption(OPTION_JOIN, false, true, "<separator>");
+
+    argumentsParser.addOption(OPTION_FIND_BUGS, false, true, "<test command>");
 
     argumentsParser.addOption(OPTION_TEST_PEG, false);
 
@@ -179,6 +186,17 @@ public final class FuzzPEG {
 
     final boolean resetCoverage = arguments.hasOption(OPTION_RESET_COVERAGE);
 
+    final String[] testCommandLine = getTestCommandLine(arguments);
+    final boolean findBugs = (testCommandLine != null);
+
+    if (findBugs && fileNamePattern == null) {
+      abort(String.format("[!] the '%s' command line option requires the '%s' option",
+          OPTION_FIND_BUGS, OPTION_OUT));
+
+      assert (false);
+      return;
+    }
+
     for (final Node<?> tree : fuzzerLoop) {
       final String program = joiner.join(tree);
 
@@ -195,7 +213,18 @@ public final class FuzzPEG {
         final String fileName =
             expandFileNamePattern(fileNamePattern, maxHeight, index, seed, batchSize);
 
-        writeProgramToFile(program, fileName);
+        if (findBugs) {
+          final TestFunction testFunction = new ExternalTestFunction(testCommandLine, fileName);
+
+          if (testFunction.test(program)) {
+            System.err.println("[i] program triggers a bug => keep program");
+          } else {
+            System.err.println("[i] program does not trigger a bug => discard program");
+            FileUtil.deleteFile(fileName);
+          }
+        } else {
+          writeProgramToFile(program, fileName);
+        }
       }
 
       if (fileNamePatternDot != null) {
@@ -347,6 +376,14 @@ public final class FuzzPEG {
     } else {
       return 1;
     }
+  }
+
+  private static final String[] getTestCommandLine(final ProgramArguments arguments) {
+    if (!arguments.hasOption(OPTION_FIND_BUGS)) {
+      return null;
+    }
+
+    return ArgumentSplitter.splitArguments(arguments.getOption(OPTION_FIND_BUGS));
   }
 
   private static final void testPEG(final String program, final Lexer lexer, final Parser parser,
