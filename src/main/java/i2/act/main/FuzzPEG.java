@@ -122,55 +122,16 @@ public final class FuzzPEG {
     printUnreachableNodes(reachable);
 
     if (arguments.hasOption(OPTION_PRINT_MIN_HEIGHTS)) {
-      final Map<GrammarGraphNode<?,?>, Integer> minHeights =
-          MinHeightComputation.computeMinHeights(grammarGraph);
-
-      printComputationResults(minHeights);
+      printMinHeights(grammarGraph);
     }
 
     if (arguments.hasOption(OPTION_PRINT_REACHABLE_CHOICES)) {
-      final Map<GrammarGraphNode<?,?>, Map<GrammarGraphNode<?,?>, Integer>> reachableNodes =
-          ReachableNodesComputation.computeReachableNodes(grammarGraph);
-
-      for (final Map.Entry<GrammarGraphNode<?,?>, Map<GrammarGraphNode<?,?>, Integer>> entry
-          : reachableNodes.entrySet()) {
-        final GrammarGraphNode<?,?> node = entry.getKey();
-        final Map<GrammarGraphNode<?,?>, Integer> result = entry.getValue();
-
-        if (node instanceof Choice) {
-          final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
-
-          final String serialized = result.keySet().stream()
-              .filter(Choice.class::isInstance)
-              .map(Choice.class::cast)
-              .map((choice) -> String.format("(%s, %d)",
-                  choice.getGrammarSymbol(), result.get(choice)))
-              .collect(Collectors.joining(", "));
-
-          if (symbol != null) {
-            System.err.format("-----[ %s ]-----\n[%s]\n\n", symbol, serialized);
-          }
-        }
-      }
+      printReachableChoices(grammarGraph);
     }
 
     final long initialSeed = arguments.getLongOptionOr(OPTION_SEED, System.currentTimeMillis());
     System.err.format("[i] initial seed: %d\n", initialSeed);
 
-    final int count;
-    {
-      if (arguments.hasOption(OPTION_COUNT)) {
-        final String countValue = arguments.getOption(OPTION_COUNT);
-
-        if (INFINITE_PROGRAMS.equalsIgnoreCase(countValue)) {
-          count = FuzzerLoop.INFINITE;
-        } else {
-          count = arguments.getIntOption(OPTION_COUNT);
-        }
-      } else {
-        count = 1;
-      }
-    }
     final int batchSize = arguments.getIntOptionOr(OPTION_BATCH_SIZE, DEFAULT_BATCH_SIZE);
 
     final int minMaxHeight = MinMaxHeightComputation.computeMinMaxHeight(grammarGraph);
@@ -198,17 +159,8 @@ public final class FuzzPEG {
     final String fileNamePatternDot = arguments.getOptionOr(OPTION_DOT, null);
 
     final boolean testPEG = arguments.hasOption(OPTION_TEST_PEG);
-    final Lexer lexer;
-    final Parser parser;
-    {
-      if (testPEG) {
-        lexer = Lexer.forGrammar(grammar);
-        parser = Parser.fromGrammar(grammar);
-      } else {
-        lexer = null;
-        parser = null;
-      }
-    }
+    final Lexer lexer = (testPEG) ? (Lexer.forGrammar(grammar)) : (null);
+    final Parser parser = (testPEG) ? (Parser.fromGrammar(grammar)) : (null);
 
     final Random rng = new Random();
 
@@ -216,38 +168,13 @@ public final class FuzzPEG {
 
     final AlternativeCoverage coverage = new AlternativeCoverage(grammarGraph);
 
-    final SelectionStrategy selectionStrategy;
-    {
-      if (arguments.hasOption(OPTION_SELECTION)) {
-        try {
-          selectionStrategy = SelectionStrategyParser.parse(
-              arguments.getOption(OPTION_SELECTION), grammarGraph, coverage, rng);
-        } catch (final Exception exception) {
-          abort(String.format(
-              "[!] could not parse selection strategy: %s", exception.getMessage()));
-
-          assert (false);
-          return;
-        }
-      } else {
-        selectionStrategy = new WeightedRandomSelection(rng);
-      }
-
-      assert (selectionStrategy != null);
-    }
+    final SelectionStrategy selectionStrategy =
+        getSelectionStrategy(arguments, grammarGraph, coverage, rng);
 
     final Fuzzer fuzzer =
         new Fuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy, coverage);
 
-    FuzzerLoop fuzzerLoop;
-    {
-      fuzzerLoop = FuzzerLoop.fixedCount(
-        count, fuzzer, (loop) -> rng.setSeed(initialSeed + loop.numberOfAttempts()));
-
-      if (arguments.hasOption(OPTION_ONLY_ADDITIONAL_COVERAGE)) {
-        fuzzerLoop = FuzzerLoop.onlyAdditionalCoverage(coverage, fuzzerLoop);
-      }
-    }
+    FuzzerLoop fuzzerLoop = getFuzzerLoop(arguments, fuzzer, coverage, rng, initialSeed);
 
     final boolean resetCoverage = arguments.hasOption(OPTION_RESET_COVERAGE);
 
@@ -258,12 +185,7 @@ public final class FuzzPEG {
       final long seed = initialSeed + fuzzerLoop.numberOfAttempts() - 1;
 
       if (testPEG) {
-        try {
-          final TokenStream tokens = lexer.lex(program);
-          parser.parse(tokens);
-        } catch (final Exception exception) {
-          System.err.format("[!] parsing failed for seed %d: %s\n", seed, exception.getMessage());
-        }
+        testPEG(program, lexer, parser, seed);
       } else if (fileNamePattern == null) {
         System.out.println(program);
       }
@@ -272,22 +194,14 @@ public final class FuzzPEG {
         final String fileName =
             expandFileNamePattern(fileNamePattern, maxHeight, index, seed, batchSize);
 
-        FileUtil.createPathIfNotExists(fileName);
-
-        final SafeWriter writer = SafeWriter.openFile(fileName);
-        writer.write(program);
-        writer.close();
+        writeProgramToFile(program, fileName);
       }
 
       if (fileNamePatternDot != null) {
         final String fileName =
             expandFileNamePattern(fileNamePatternDot, maxHeight, index, seed, batchSize);
 
-        FileUtil.createPathIfNotExists(fileName);
-
-        final SafeWriter writer = SafeWriter.openFile(fileName);
-        DotGenerator.print(tree, writer);
-        writer.close();
+        writeDotToFile(tree, fileName);
       }
 
       System.err.format("[i] covered %3d of %3d alternatives\n",
@@ -300,26 +214,7 @@ public final class FuzzPEG {
     }
 
     if (arguments.hasOption(OPTION_PRINT_UNCOVERED)) {
-      for (final GrammarGraphNode<?,?> node : grammarGraph) {
-        if (!(node instanceof Choice)) {
-          continue;
-        }
-
-        assert (reachable.containsKey(node));
-        if (!reachable.get(node)) {
-          continue;
-        }
-
-        final Choice choice = (Choice) node;
-        final String choiceName =
-            (choice.hasGrammarSymbol()) ? (choice.getGrammarSymbol().getName()) : "<unknown>";
-
-        for (final Alternative alternative : choice.getSuccessorEdges()) {
-          if (!coverage.isCovered(alternative)) {
-            System.err.format("[i] missing alternative of '%s'\n", choiceName);
-          }
-        }
-      }
+      printUncovered(grammarGraph, coverage, reachable);
     }
 
     final int numberOfAttempts = fuzzerLoop.numberOfAttempts();
@@ -358,13 +253,37 @@ public final class FuzzPEG {
     }
   }
 
-  private static final String expandFileNamePattern(final String fileNamePattern,
-      final int maxHeight, final int index, final long seed, final int batchSize) {
-    return fileNamePattern
-        .replaceAll(Pattern.quote("#{MAX_HEIGHT}"), Matcher.quoteReplacement("" + maxHeight))
-        .replaceAll(Pattern.quote("#{INDEX}"), Matcher.quoteReplacement("" + index))
-        .replaceAll(Pattern.quote("#{SEED}"), Matcher.quoteReplacement("" + seed))
-        .replaceAll(Pattern.quote("#{BATCH}"), Matcher.quoteReplacement("" + (index / batchSize)));
+  private static final void printMinHeights(final GrammarGraph grammarGraph) {
+    final Map<GrammarGraphNode<?,?>, Integer> minHeights =
+        MinHeightComputation.computeMinHeights(grammarGraph);
+
+    printComputationResults(minHeights);
+  }
+
+  private static final void printReachableChoices(final GrammarGraph grammarGraph) {
+    final Map<GrammarGraphNode<?,?>, Map<GrammarGraphNode<?,?>, Integer>> reachableNodes =
+        ReachableNodesComputation.computeReachableNodes(grammarGraph);
+
+    for (final Map.Entry<GrammarGraphNode<?,?>, Map<GrammarGraphNode<?,?>, Integer>> entry
+        : reachableNodes.entrySet()) {
+      final GrammarGraphNode<?,?> node = entry.getKey();
+      final Map<GrammarGraphNode<?,?>, Integer> result = entry.getValue();
+
+      if (node instanceof Choice) {
+        final Symbol<?> symbol = ((Choice) node).getGrammarSymbol();
+
+        final String serialized = result.keySet().stream()
+            .filter(Choice.class::isInstance)
+            .map(Choice.class::cast)
+            .map((choice) -> String.format("(%s, %d)",
+                choice.getGrammarSymbol(), result.get(choice)))
+            .collect(Collectors.joining(", "));
+
+        if (symbol != null) {
+          System.err.format("-----[ %s ]-----\n[%s]\n\n", symbol, serialized);
+        }
+      }
+    }
   }
 
   private static final void printComputationResults(final Map<GrammarGraphNode<?,?>, ?> results) {
@@ -380,6 +299,88 @@ public final class FuzzPEG {
         }
       }
     }
+  }
+
+  private static final SelectionStrategy getSelectionStrategy(final ProgramArguments arguments,
+      final GrammarGraph grammarGraph, final AlternativeCoverage coverage, final Random rng) {
+    if (arguments.hasOption(OPTION_SELECTION)) {
+      try {
+        return SelectionStrategyParser.parse(
+            arguments.getOption(OPTION_SELECTION), grammarGraph, coverage, rng);
+      } catch (final Exception exception) {
+        abort(String.format(
+            "[!] could not parse selection strategy: %s", exception.getMessage()));
+
+        assert (false);
+        return null;
+      }
+    } else {
+      return new WeightedRandomSelection(rng);
+    }
+  }
+
+  private static final FuzzerLoop getFuzzerLoop(final ProgramArguments arguments,
+      final Fuzzer fuzzer, final AlternativeCoverage coverage, final Random rng,
+      final long initialSeed) {
+    final int count = getCount(arguments);
+
+    FuzzerLoop fuzzerLoop = FuzzerLoop.fixedCount(
+        count, fuzzer, (loop) -> rng.setSeed(initialSeed + loop.numberOfAttempts()));
+
+    if (arguments.hasOption(OPTION_ONLY_ADDITIONAL_COVERAGE)) {
+      fuzzerLoop = FuzzerLoop.onlyAdditionalCoverage(coverage, fuzzerLoop);
+    }
+
+    return fuzzerLoop;
+  }
+
+  private static final int getCount(final ProgramArguments arguments) {
+    if (arguments.hasOption(OPTION_COUNT)) {
+      final String countValue = arguments.getOption(OPTION_COUNT);
+
+      if (INFINITE_PROGRAMS.equalsIgnoreCase(countValue)) {
+        return FuzzerLoop.INFINITE;
+      } else {
+        return arguments.getIntOption(OPTION_COUNT);
+      }
+    } else {
+      return 1;
+    }
+  }
+
+  private static final void testPEG(final String program, final Lexer lexer, final Parser parser,
+      final long seed) {
+    try {
+      final TokenStream tokens = lexer.lex(program);
+      parser.parse(tokens);
+    } catch (final Exception exception) {
+      System.err.format("[!] parsing failed for seed %d: %s\n", seed, exception.getMessage());
+    }
+  }
+
+  private static final void writeProgramToFile(final String program, final String fileName) {
+    FileUtil.createPathIfNotExists(fileName);
+
+    final SafeWriter writer = SafeWriter.openFile(fileName);
+    writer.write(program);
+    writer.close();
+  }
+
+  private static final void writeDotToFile(final Node<?> tree, final String fileName) {
+    FileUtil.createPathIfNotExists(fileName);
+
+    final SafeWriter writer = SafeWriter.openFile(fileName);
+    DotGenerator.print(tree, writer);
+    writer.close();
+  }
+
+  private static final String expandFileNamePattern(final String fileNamePattern,
+      final int maxHeight, final int index, final long seed, final int batchSize) {
+    return fileNamePattern
+        .replaceAll(Pattern.quote("#{MAX_HEIGHT}"), Matcher.quoteReplacement("" + maxHeight))
+        .replaceAll(Pattern.quote("#{INDEX}"), Matcher.quoteReplacement("" + index))
+        .replaceAll(Pattern.quote("#{SEED}"), Matcher.quoteReplacement("" + seed))
+        .replaceAll(Pattern.quote("#{BATCH}"), Matcher.quoteReplacement("" + (index / batchSize)));
   }
 
   private static final void printUnreachableNodes(
@@ -399,6 +400,30 @@ public final class FuzzPEG {
     if (!unreachableSymbols.isEmpty()) {
       System.err.format("[!] WARNING: grammar graph contains unreachable nodes: %s\n",
           unreachableSymbols);
+    }
+  }
+
+  private static final void printUncovered(final GrammarGraph grammarGraph,
+      final AlternativeCoverage coverage, final Map<GrammarGraphNode<?,?>, Boolean> reachable) {
+    for (final GrammarGraphNode<?,?> node : grammarGraph) {
+      if (!(node instanceof Choice)) {
+        continue;
+      }
+
+      assert (reachable.containsKey(node));
+      if (!reachable.get(node)) {
+        continue;
+      }
+
+      final Choice choice = (Choice) node;
+      final String choiceName =
+          (choice.hasGrammarSymbol()) ? (choice.getGrammarSymbol().getName()) : "<unknown>";
+
+      for (final Alternative alternative : choice.getSuccessorEdges()) {
+        if (!coverage.isCovered(alternative)) {
+          System.err.format("[i] missing alternative of '%s'\n", choiceName);
+        }
+      }
     }
   }
 
