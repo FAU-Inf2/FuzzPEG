@@ -282,6 +282,11 @@ In addition, *FuzzPEG* takes the following (optional) command line arguments:
   covered.
 - `--join <separator>`: Specifies the separator that two adjacent tokens should be separated with in
   the serialized output (if necessary); the default separator consists of a single space.
+- `--findBugs <test command>` (requires the `--out` command line option): If this option is set,
+  *FuzzPEG* checks for each generated program if it triggers a bug (and only keeps those programs
+  that trigger a bug). To this end, *FuzzPEG* executes the given `<test command>` (the program's
+  file name is appended to it); if this command returns with a non-zero exit code, *FuzzPEG* assumes
+  that the program triggers a bug.
 - `--testPEG`: As explained [above](#a-note-on-grammar-classes), it is possible that the programs
   generated with *FuzzPEG* cannot be parsed with a parser for the input PEG. If the `--testPEG`
   option is set, *FuzzPEG* tries to parse the generated programs and prints an error message in case
