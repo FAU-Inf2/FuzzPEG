@@ -83,11 +83,13 @@ public final class RandomStrings {
 
     final Random rng = new Random();
 
+    final RandomStrings randomStrings = new RandomStrings(rng);
+
     for (int index = 0; index < count; ++index) {
       final long seed = initialSeed + index;
       rng.setSeed(seed);
 
-      final String program = randomString(minSize, maxSize, characterSet, rng);
+      final String program = randomStrings.generate(minSize, maxSize, characterSet);
 
       if (fileNamePattern != null) {
         final String fileName =
@@ -152,27 +154,6 @@ public final class RandomStrings {
     return result;
   }
 
-  private static final String randomString(final int minSize, final int maxSize,
-      final char[] characters, final Random rng) {
-    final int size = randomSize(minSize, maxSize, rng);
-
-    final StringBuilder builder = new StringBuilder();
-
-    for (int count = 0; count < size; ++count) {
-      builder.append(randomCharacter(characters, rng));
-    }
-
-    return builder.toString();
-  }
-
-  private static final int randomSize(final int minSize, final int maxSize, final Random rng) {
-    return minSize + rng.nextInt(maxSize - minSize + 1);
-  }
-
-  private static final char randomCharacter(final char[] characters, final Random rng) {
-    return characters[rng.nextInt(characters.length)];
-  }
-
   private static final String expandFileNamePattern(final String fileNamePattern, final int index, 
       final long seed, final int batchSize) {
     return fileNamePattern
@@ -188,5 +169,33 @@ public final class RandomStrings {
     writer.write(program);
     writer.close();
   }
+
+  // ===============================================================================================
+
+  private final Random rng;
+
+  public RandomStrings(final Random rng) {
+    this.rng = rng;
+  }
+
+  public final String generate(final int minSize, final int maxSize,
+      final char[] characters) {
+    final char[] result = new char[chooseSize(minSize, maxSize)];
+
+    for (int index = 0; index < result.length; ++index) {
+      result[index] = chooseCharacter(characters);
+    }
+
+    return new String(result);
+  }
+
+  private final int chooseSize(final int minSize, final int maxSize) {
+    return minSize + this.rng.nextInt(maxSize - minSize + 1);
+  }
+
+  private final char chooseCharacter(final char[] characters) {
+    return characters[this.rng.nextInt(characters.length)];
+  }
+
 
 }
