@@ -180,13 +180,15 @@ public final class RandomStrings {
 
   public final String generate(final int minSize, final int maxSize,
       final char[] characters) {
-    final char[] result = new char[chooseSize(minSize, maxSize)];
+    final StringBuilder builder = new StringBuilder();
 
-    for (int index = 0; index < result.length; ++index) {
-      result[index] = chooseCharacter(characters);
+    final int size = chooseSize(minSize, maxSize);
+
+    for (int count = 0; count < size; ++count) {
+      builder.append(chooseCharacter(characters));
     }
 
-    return new String(result);
+    return builder.toString();
   }
 
   private final int chooseSize(final int minSize, final int maxSize) {

@@ -44,9 +44,7 @@ public final class RandomTokenGenerator implements TokenGenerator {
         tokenValue = nfa.getLiteralString();
       } else {
         do {
-          final StringBuilder builder = new StringBuilder();
-          createRandomString(nfa, builder);
-          tokenValue = builder.toString();
+          tokenValue = createRandomString(nfa);
         } while (this.checkTokens && !isValid(tokenValue, lexerSymbol));
       }
     }
@@ -54,23 +52,20 @@ public final class RandomTokenGenerator implements TokenGenerator {
     return new Token(lexerSymbol, tokenValue);
   }
 
-  private final void createRandomString(final NFA nfa, final StringBuilder builder) {
+  private final String createRandomString(final NFA nfa) {
+    final StringBuilder builder = new StringBuilder();
+
     NFAState currentState = nfa.getStartState();
 
     while (true) {
-      final List<Transition> transitions = currentState.getTransitions();
-
-      if (isAcceptingState(currentState, nfa)) {
-        if (transitions.isEmpty() || this.rng.nextBoolean()) {
-          return;
-        }
+      if (isAcceptingState(currentState, nfa) && stopHere(currentState)) {
+        return builder.toString();
       }
 
-      assert (!transitions.isEmpty());
-      final Transition transition = transitions.get(this.rng.nextInt(transitions.size()));
+      final Transition transition = chooseTransition(currentState);
 
       if (!transition.isEpsilonTransition()) {
-        builder.append(randomCharacter(transition));
+        builder.append(chooseCharacter(transition));
       }
 
       currentState = transition.getTo();
@@ -81,11 +76,22 @@ public final class RandomTokenGenerator implements TokenGenerator {
     return nfa.getAcceptingStates().contains(state);
   }
 
-  private final char randomCharacter(final Transition transition) {
-    return randomCharacter(transition.getCharacters());
+  private final boolean stopHere(final NFAState state) {
+    return state.getTransitions().isEmpty() || this.rng.nextBoolean();
   }
 
-  private final char randomCharacter(final CharacterSet characterSet) {
+  private final Transition chooseTransition(final NFAState state) {
+    final List<Transition> transitions = state.getTransitions();
+
+    assert (!transitions.isEmpty());
+    return transitions.get(this.rng.nextInt(transitions.size()));
+  }
+
+  private final char chooseCharacter(final Transition transition) {
+    return chooseCharacter(transition.getCharacters());
+  }
+
+  private final char chooseCharacter(final CharacterSet characterSet) {
     if (characterSet instanceof CharacterSet.SingleCharacter) {
       return ((CharacterSet.SingleCharacter) characterSet).getCharacter();
     } else {
