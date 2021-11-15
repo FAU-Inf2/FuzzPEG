@@ -346,6 +346,26 @@ grammar and the fuzzing results:
 - `--printUncovered`: If this option is set, *FuzzPEG* prints a list of alternatives that have not
   been covered at the end of the fuzzer run.
 
+
+## Generation of Random Strings
+
+In addition, it is also possible to generate fully random strings with the `misc/random_string.sh`
+helper script. It takes the following command line options:
+
+- `--min <min. size>` (mandatory): Minimum number of characters that the randomly generated strings
+  should consist of.
+- `--max <max. size>` (mandatory): Maximum number of characters that the randomly generated strings
+  should consist of.
+- `--chars <characters>`: Characters that the randomly generated strings should consist of. It is
+  possible to specify character ranges; for example, use `--chars 'a-zA-Z'` to generate random
+  strings that only consist of lower-case and upper-case letters.
+- `--count <count>`: The number of random strings that should be generated.
+- `--seed <seed>`: The random seed that should be used for generating the random strings.
+- `--out <file name pattern>`: Same as for [FuzzPEG](#output-options).
+- `--batchSize <size>`: Same as for [FuzzPEG](#output-options).
+- `--findBugs <test command>`: Same as for [FuzzPEG](#test-options).
+
+
 ## License
 
 *FuzzPEG* is licensed under the terms of the MIT license (see [LICENSE.mit](LICENSE.mit)).
