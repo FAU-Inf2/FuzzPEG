@@ -1,5 +1,8 @@
 package i2.act.main;
 
+import i2.act.test.ExternalTestFunction;
+import i2.act.test.TestFunction;
+import i2.act.util.ArgumentSplitter;
 import i2.act.util.FileUtil;
 import i2.act.util.SafeWriter;
 import i2.act.util.options.ProgramArguments;
@@ -31,6 +34,8 @@ public final class RandomStrings {
 
   private static final String OPTION_BATCH_SIZE = "--batchSize";
 
+  private static final String OPTION_FIND_BUGS = "--findBugs";
+
   static {
     argumentsParser = new ProgramArgumentsParser();
 
@@ -45,6 +50,8 @@ public final class RandomStrings {
     argumentsParser.addOption(OPTION_OUT, false, true, "<file name pattern>");
 
     argumentsParser.addOption(OPTION_BATCH_SIZE, false, true, "<batch size>");
+
+    argumentsParser.addOption(OPTION_FIND_BUGS, false, true, "<test command>");
   }
 
   public static final void main(final String[] args) {
@@ -81,6 +88,17 @@ public final class RandomStrings {
 
     final String fileNamePattern = arguments.getOptionOr(OPTION_OUT, null);
 
+    final String[] testCommandLine = getTestCommandLine(arguments);
+    final boolean findBugs = (testCommandLine != null);
+
+    if (findBugs && fileNamePattern == null) {
+      abort(String.format("[!] the '%s' command line option requires the '%s' option",
+          OPTION_FIND_BUGS, OPTION_OUT));
+
+      assert (false);
+      return;
+    }
+
     final Random rng = new Random();
 
     final RandomStrings randomStrings = new RandomStrings(rng);
@@ -94,7 +112,19 @@ public final class RandomStrings {
       if (fileNamePattern != null) {
         final String fileName =
             expandFileNamePattern(fileNamePattern, index, seed, batchSize);
-        writeProgramToFile(program, fileName);
+
+        if (findBugs) {
+          final TestFunction testFunction = new ExternalTestFunction(testCommandLine, fileName);
+
+          if (testFunction.test(program)) {
+            System.err.println("[i] program triggers a bug => keep program");
+          } else {
+            System.err.println("[i] program does not trigger a bug => discard program");
+            FileUtil.deleteFile(fileName);
+          }
+        } else {
+          writeProgramToFile(program, fileName);
+        }
       } else {
         System.out.println(program);
       }
@@ -199,5 +229,12 @@ public final class RandomStrings {
     return characters[this.rng.nextInt(characters.length)];
   }
 
+  private static final String[] getTestCommandLine(final ProgramArguments arguments) {
+    if (!arguments.hasOption(OPTION_FIND_BUGS)) {
+      return null;
+    }
+
+    return ArgumentSplitter.splitArguments(arguments.getOption(OPTION_FIND_BUGS));
+  }
 
 }
