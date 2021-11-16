@@ -347,7 +347,7 @@ grammar and the fuzzing results:
   been covered at the end of the fuzzer run.
 
 
-## Generating Strings of Random Characters of Tokens
+## Generating Strings of Random Characters or Tokens
 
 The *FuzzPEG* framework also provides means to generate strings of random characters
 (`misc/random_string.sh`) or tokens (`misc/random_tokens.sh`). The two helper scripts take the
