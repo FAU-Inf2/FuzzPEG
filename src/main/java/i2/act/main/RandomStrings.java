@@ -200,6 +200,14 @@ public final class RandomStrings {
     writer.close();
   }
 
+  private static final String[] getTestCommandLine(final ProgramArguments arguments) {
+    if (!arguments.hasOption(OPTION_FIND_BUGS)) {
+      return null;
+    }
+
+    return ArgumentSplitter.splitArguments(arguments.getOption(OPTION_FIND_BUGS));
+  }
+
   // ===============================================================================================
 
   private final Random rng;
@@ -227,14 +235,6 @@ public final class RandomStrings {
 
   private final char chooseCharacter(final char[] characters) {
     return characters[this.rng.nextInt(characters.length)];
-  }
-
-  private static final String[] getTestCommandLine(final ProgramArguments arguments) {
-    if (!arguments.hasOption(OPTION_FIND_BUGS)) {
-      return null;
-    }
-
-    return ArgumentSplitter.splitArguments(arguments.getOption(OPTION_FIND_BUGS));
   }
 
 }
