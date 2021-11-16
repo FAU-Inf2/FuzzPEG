@@ -347,23 +347,34 @@ grammar and the fuzzing results:
   been covered at the end of the fuzzer run.
 
 
-## Generation of Random Strings
+## Generating Strings of Random Characters of Tokens
 
-In addition, it is also possible to generate fully random strings with the `misc/random_string.sh`
-helper script. It takes the following command line options:
+The *FuzzPEG* framework also provides means to generate strings of random characters
+(`misc/random_string.sh`) or tokens (`misc/random_tokens.sh`). The two helper scripts take the
+following command line options:
 
-- `--min <min. size>` (mandatory): Minimum number of characters that the randomly generated strings
-  should consist of.
-- `--max <max. size>` (mandatory): Maximum number of characters that the randomly generated strings
-  should consist of.
-- `--chars <characters>`: Characters that the randomly generated strings should consist of. It is
-  possible to specify character ranges; for example, use `--chars 'a-zA-Z'` to generate random
-  strings that only consist of lower-case and upper-case letters.
-- `--count <count>`: The number of random strings that should be generated.
-- `--seed <seed>`: The random seed that should be used for generating the random strings.
+- `--min <min. size>` (required): Minimum number of characters or tokens that the randomly
+  generated strings should consist of.
+- `--max <max. size>` (required): Maximum number of characters or tokens that the randomly
+  generated strings should consist of.
+- `--count <count>`: The number of strings that should be generated.
+- `--seed <seed>`: The random seed that should be used for generating the strings.
 - `--out <file name pattern>`: Same as for [FuzzPEG](#output-options).
 - `--batchSize <size>`: Same as for [FuzzPEG](#output-options).
 - `--findBugs <test command>`: Same as for [FuzzPEG](#test-options).
+
+The `misc/random_string.sh` helper script takes the following additional command line options:
+
+- `--chars <characters>`: Specifies the characters that the randomly generated strings should
+  consist of. Note that it is possible to specify character ranges; for example, use `--chars
+  'a-zA-Z'` to generate random strings that only consist of lower-case and upper-case letters.
+
+The `misc/random_tokens.sh` helper script takes the following additional command line options:
+
+- `--grammar <path to grammar>` (required): Specifies the path to the grammar that describes the
+  valid tokens.
+- `--join <separator>`: Specifies the separator that two adjacent tokens should be separated with in
+  the serialized output (if necessary); the default separator consists of a single space.
 
 
 ## License
