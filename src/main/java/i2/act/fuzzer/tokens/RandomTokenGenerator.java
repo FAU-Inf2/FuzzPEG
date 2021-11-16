@@ -9,6 +9,7 @@ import i2.act.packrat.nfa.NFA;
 import i2.act.packrat.nfa.NFAState;
 import i2.act.packrat.nfa.Transition;
 import i2.act.peg.ast.CharacterRange;
+import i2.act.peg.ast.Grammar;
 import i2.act.peg.ast.Group;
 import i2.act.peg.ast.Range;
 import i2.act.peg.ast.SingleCharacter;
@@ -25,7 +26,11 @@ public final class RandomTokenGenerator implements TokenGenerator {
   private final boolean checkTokens = true; // TODO make configurable
 
   public RandomTokenGenerator(final GrammarGraph grammarGraph, final Random rng) {
-    this.lexer = Lexer.forGrammar(grammarGraph.getGrammar());
+    this(grammarGraph.getGrammar(), rng);
+  }
+
+  public RandomTokenGenerator(final Grammar grammar, final Random rng) {
+    this.lexer = Lexer.forGrammar(grammar);
     this.rng = rng;
   }
 
@@ -101,10 +106,22 @@ public final class RandomTokenGenerator implements TokenGenerator {
       final Group group = characterGroup.getGroup();
 
       if (group.isInverted()) {
-        // iterate over printable (ASCII) characters and check if there is a valid one
-        for (char character = ' '; character <= '~'; ++character) {
+        // starting at a random character, iterate over printable (ASCII) characters and check if
+        // there is a valid one
+        final char FIRST_CHAR = ' ';
+        final char LAST_CHAR = '~';
+
+        final int count = LAST_CHAR - FIRST_CHAR + 1;
+        char character = (char)(FIRST_CHAR + this.rng.nextInt(count));
+
+        for (int i = 0; i < count; ++i) {
           if (characterGroup.matches(character)) {
             return character;
+          } else {
+            character = (char)(character + 1);
+            if (character > LAST_CHAR) {
+              character = FIRST_CHAR;
+            }
           }
         }
 
