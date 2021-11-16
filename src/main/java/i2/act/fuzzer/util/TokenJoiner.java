@@ -20,12 +20,14 @@ import java.util.Set;
 
 public final class TokenJoiner {
 
+  private final Grammar grammar;
   private final Lexer lexer;
   private final String separator;
 
   private final Map<LexerSymbol, Map<LexerSymbol, Boolean>> needsSeparator;
 
   public TokenJoiner(final Grammar grammar, final String separator) {
+    this.grammar = grammar;
     this.lexer = Lexer.forGrammar(grammar);
     this.separator = separator;
 
@@ -63,7 +65,7 @@ public final class TokenJoiner {
           }
         } else {
           for (final LexerSymbol secondSymbol : grammar.getLexerSymbols()) {
-            if (firstSymbol == secondSymbol || secondSymbol.isSkippedToken()) {
+            if (firstSymbol == secondSymbol) {
               continue;
             }
 
@@ -179,6 +181,18 @@ public final class TokenJoiner {
 
   private final boolean needsSeparator(final String string, final LexerSymbol firstSymbol,
       final LexerSymbol secondSymbol) {
+    for (final LexerSymbol otherSymbol : this.grammar.getLexerSymbols()) {
+      if (otherSymbol == firstSymbol) {
+        continue;
+      }
+
+      final NFA otherNFA = this.lexer.getNFA(otherSymbol);
+
+      if (otherNFA.isPossiblePrefix(string)) {
+        return true;
+      }
+    }
+
     final TokenStream tokens;
     {
       try {
