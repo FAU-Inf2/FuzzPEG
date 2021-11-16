@@ -268,7 +268,7 @@ public final class FuzzPEG {
     System.exit(1);
   }
 
-  private static final Grammar readGrammar(final String grammarPath) {
+  public static final Grammar readGrammar(final String grammarPath) {
     try {
       final String grammarInput = FileUtil.readFile(grammarPath);
       final Grammar grammar = PEGParser.parse(grammarInput);
