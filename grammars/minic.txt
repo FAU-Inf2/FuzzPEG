@@ -8,11 +8,11 @@ global_declaration
   ;
 
 variable_declaration
-  : type_name IDENTIFIER SEMICOLON
+  : type_name IDENT SEMICOLON
   ;
 
 function_declaration
-  : type_name IDENTIFIER LPAREN parameter_declaration_list RPAREN block
+  : type_name IDENT LPAREN parameter_declaration_list RPAREN block
   ;
 
 parameter_declaration_list
@@ -20,7 +20,7 @@ parameter_declaration_list
   ;
 
 parameter_declaration
-  : type_name IDENTIFIER
+  : type_name IDENT
   ;
 
 block
@@ -28,7 +28,7 @@ block
   ;
 
 statement
-  : IDENTIFIER ASSIGN expression SEMICOLON
+  : IDENT ASSIGN expression SEMICOLON
   | function_call SEMICOLON
   | IF LPAREN expression RPAREN block ( ELSE block )?
   | WHILE LPAREN expression RPAREN block
@@ -81,12 +81,12 @@ mul_operator
 factor
   : function_call
   | NUM
-  | IDENTIFIER
+  | IDENT
   | LPAREN expression RPAREN
   ;
 
 function_call
-  : IDENTIFIER LPAREN ( argument_list )? RPAREN
+  : IDENT LPAREN ( argument_list )? RPAREN
   ;
 
 argument_list
@@ -123,10 +123,10 @@ MUL: '*' ;
 DIV: '/' ;
 
 NUM: '0' | ( [1-9][0-9]* ) ;
-IDENTIFIER: [a-zA-Z_] [a-zA-Z0-9_]* ;
+IDENT: [a-zA-Z_] [a-zA-Z0-9_]* ;
 
 @skip
-LINE_COMMENT: '//' [^\r\n]* ;
+LINE_COMMENT: '//' [^\r\n]* '\n' ;
 
 @skip
 BLOCK_COMMENT: '/*' ( [^*]* '*'+ ) ( [^*/] [^*]* '*'+ )* '/' ;
