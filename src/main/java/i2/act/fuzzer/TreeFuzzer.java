@@ -15,8 +15,6 @@ import i2.act.peg.symbols.LexerSymbol;
 import i2.act.peg.symbols.ParserSymbol;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public final class TreeFuzzer extends Fuzzer<Node<?>> {
 
@@ -33,15 +31,13 @@ public final class TreeFuzzer extends Fuzzer<Node<?>> {
 
   @Override
   public final Node<?> generate() {
-    final List<Node<?>> nodes = generate(this.grammarGraph.getRootNode(), this.maxHeight);
-
-    assert (nodes.size() == 1);
-    return nodes.get(0);
+    return generate(this.grammarGraph.getRootNode(), this.maxHeight, null);
   }
 
-  private final List<Node<?>> generate(final Choice choice, final int maxHeight) {
+  private final Node<?> generate(final Choice choice, final int maxHeight, final Node<?> parent) {
     if (isTerminal(choice)) {
-      return listOf(createTerminalNode(choice));
+      final Node<?> node = createTerminalNode(choice, parent);
+      return (parent == null) ? (node) : (parent);
     }
 
     final int childHeight = childHeight(choice, maxHeight);
@@ -50,43 +46,50 @@ public final class TreeFuzzer extends Fuzzer<Node<?>> {
 
     track(chosen);
 
-    final List<Node<?>> children = new ArrayList<>();
+    final Node<?> node = createNonTerminalNode(choice, parent);
 
     for (final Element element : elementsOf(chosen)) {
       for (int count = 0; generateMoreElements(element, count, childHeight); ++count) {
-        children.addAll(generate(element.getTarget(), childHeight));
+        generate(element.getTarget(), childHeight, node);
       }
     }
 
-    if (isProduction(choice)) {
-      return listOf(createNonTerminalNode(choice, children));
-    } else {
-      return children;
-    }
+    return (parent == null) ? (node) : (parent);
   }
 
-  private final TerminalNode createTerminalNode(final Choice choice) {
+  private final Node<?> createTerminalNode(final Choice choice, final Node<?> parent) {
     assert (choice.hasGrammarSymbol());
     assert (choice.getGrammarSymbol() instanceof LexerSymbol);
 
     final LexerSymbol symbol = (LexerSymbol) choice.getGrammarSymbol();
     final Token token = this.tokenGenerator.createToken(symbol);
 
-    return new TerminalNode(token);
+    final Node<?> node = new TerminalNode(token);
+
+    if (parent != null) {
+      parent.getChildren().add(node);
+    }
+
+    return node;
   }
 
-  private final NonTerminalNode createNonTerminalNode(final Choice choice,
-      final List<Node<?>> children) {
-    assert (choice.hasGrammarSymbol());
-    assert (choice.getGrammarSymbol() instanceof ParserSymbol);
+  private final Node<?> createNonTerminalNode(final Choice choice, final Node<?> parent) {
+    if (isProduction(choice)) {
+      assert (choice.hasGrammarSymbol());
+      assert (choice.getGrammarSymbol() instanceof ParserSymbol);
 
-    final ParserSymbol symbol = (ParserSymbol) choice.getGrammarSymbol();
+      final ParserSymbol symbol = (ParserSymbol) choice.getGrammarSymbol();
 
-    return new NonTerminalNode(symbol, children);
-  }
+      final Node<?> node = new NonTerminalNode(symbol, new ArrayList<Node<?>>());
 
-  private final List<Node<?>> listOf(final Node<?> node) {
-    return Arrays.asList(node);
+      if (parent != null) {
+        parent.getChildren().add(node);
+      }
+
+      return node;
+    } else {
+      return parent;
+    }
   }
 
 }
