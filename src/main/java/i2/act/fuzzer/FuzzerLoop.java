@@ -1,12 +1,11 @@
 package i2.act.fuzzer;
 
 import i2.act.coverage.AlternativeCoverage;
-import i2.act.packrat.cst.Node;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>> {
+public abstract class FuzzerLoop<R> implements Iterator<R>, Iterable<R> {
 
   // ===============================================================================================
 
@@ -14,31 +13,31 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
 
   // ~~ fixed count ~~
 
-  public static final FuzzerLoop fixedCount(final int count, final Fuzzer fuzzer) {
+  public static final <R> FuzzerLoop<R> fixedCount(final int count, final Fuzzer<R> fuzzer) {
     return fixedCount(count, fuzzer, null);
   }
 
-  public static final FuzzerLoop fixedCount(final int count, final Fuzzer fuzzer,
-      final Consumer<FuzzerLoop> beforeEachAttempt) {
-    return new FixedCountFuzzerLoop(count, fuzzer, beforeEachAttempt);
+  public static final <R> FuzzerLoop<R> fixedCount(final int count, final Fuzzer<R> fuzzer,
+      final Consumer<FuzzerLoop<R>> beforeEachAttempt) {
+    return new FixedCountFuzzerLoop<R>(count, fuzzer, beforeEachAttempt);
   }
 
   // ~~ infinite ~~
 
-  public static final FuzzerLoop infinite(final Fuzzer fuzzer) {
+  public static final <R> FuzzerLoop<R> infinite(final Fuzzer<R> fuzzer) {
     return infinite(fuzzer, null);
   }
 
-  public static final FuzzerLoop infinite(final Fuzzer fuzzer,
-      final Consumer<FuzzerLoop> beforeEachAttempt) {
+  public static final <R> FuzzerLoop<R> infinite(final Fuzzer<R> fuzzer,
+      final Consumer<FuzzerLoop<R>> beforeEachAttempt) {
     return fixedCount(INFINITE, fuzzer, beforeEachAttempt);
   }
 
   // ~~ only additional coverage ~~
 
-  public static final FuzzerLoop onlyAdditionalCoverage(final AlternativeCoverage coverage,
-      final FuzzerLoop baseLoop) {
-    return new FilterFuzzerLoop(baseLoop) {
+  public static final <R> FuzzerLoop<R> onlyAdditionalCoverage(final AlternativeCoverage coverage,
+      final FuzzerLoop<R> baseLoop) {
+    return new FilterFuzzerLoop<R>(baseLoop) {
 
       private int previousCoverage = 0;
 
@@ -53,7 +52,7 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
       }
 
       @Override
-      protected final boolean keep(final Node<?> tree) {
+      protected final boolean keep(final R program) {
         final boolean keep = (coverage.coveredCount() > this.previousCoverage);
         return keep;
       }
@@ -63,21 +62,21 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
 
   // ===============================================================================================
 
-  private static final class FixedCountFuzzerLoop extends FuzzerLoop {
+  private static final class FixedCountFuzzerLoop<R> extends FuzzerLoop<R> {
 
     private final int count;
 
-    private final Fuzzer fuzzer;
-    private final Consumer<FuzzerLoop> beforeEachAttempt;
+    private final Fuzzer<R> fuzzer;
+    private final Consumer<FuzzerLoop<R>> beforeEachAttempt;
 
     private int numberOfAttempts;
 
-    public FixedCountFuzzerLoop(final int count, final Fuzzer fuzzer) {
+    public FixedCountFuzzerLoop(final int count, final Fuzzer<R> fuzzer) {
       this(count, fuzzer, null);
     }
 
-    public FixedCountFuzzerLoop(final int count, final Fuzzer fuzzer,
-        final Consumer<FuzzerLoop> beforeEachAttempt) {
+    public FixedCountFuzzerLoop(final int count, final Fuzzer<R> fuzzer,
+        final Consumer<FuzzerLoop<R>> beforeEachAttempt) {
       this.count = count;
       this.fuzzer = fuzzer;
       this.beforeEachAttempt = beforeEachAttempt;
@@ -91,8 +90,8 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
     }
 
     @Override
-    protected final Node<?> generateNext() {
-      Node<?> tree = null;
+    protected final R generateNext() {
+      R next = null;
 
       ++this.numberOfAttempts;
 
@@ -100,9 +99,9 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
         this.beforeEachAttempt.accept(this);
       }
 
-      tree = this.fuzzer.generate();
+      next = this.fuzzer.generate();
 
-      return tree;
+      return next;
     }
 
     @Override
@@ -112,12 +111,12 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
 
   }
 
-  private abstract static class FilterFuzzerLoop extends FuzzerLoop {
+  private abstract static class FilterFuzzerLoop<R> extends FuzzerLoop<R> {
 
-    protected final FuzzerLoop baseLoop;
-    protected Node<?> next;
+    protected final FuzzerLoop<R> baseLoop;
+    protected R next;
 
-    public FilterFuzzerLoop(final FuzzerLoop baseLoop) {
+    public FilterFuzzerLoop(final FuzzerLoop<R> baseLoop) {
       this.baseLoop = baseLoop;
     }
 
@@ -140,11 +139,11 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
     }
 
     @Override
-    protected final Node<?> generateNext() {
+    protected final R generateNext() {
       if (this.next == null) {
         while (this.baseLoop.hasNext()) {
           beforeEachAttempt();
-          final Node<?> next = this.baseLoop.next();
+          final R next = this.baseLoop.next();
 
           if (keep(next)) {
             this.next = next;
@@ -153,7 +152,7 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
         }
       }
 
-      final Node<?> next = this.next;
+      final R next = this.next;
       this.next = null;
 
       return next;
@@ -163,7 +162,7 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
 
     protected abstract boolean cancel();
 
-    protected abstract boolean keep(final Node<?> tree);
+    protected abstract boolean keep(final R program);
 
   }
 
@@ -176,17 +175,17 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
   }
 
   @Override
-  public final FuzzerLoop iterator() {
+  public final FuzzerLoop<R> iterator() {
     return this;
   }
 
   @Override
-  public final Node<?> next() {
+  public final R next() {
     if (!hasNext()) {
-      throw new RuntimeException("no more trees to generate");
+      throw new RuntimeException("no more programs to generate");
     }
 
-    final Node<?> next = generateNext();
+    final R next = generateNext();
     assert (next != null);
 
     ++this.numberOfPrograms;
@@ -203,6 +202,6 @@ public abstract class FuzzerLoop implements Iterator<Node<?>>, Iterable<Node<?>>
   @Override
   public abstract boolean hasNext();
 
-  protected abstract Node<?> generateNext();
+  protected abstract R generateNext();
 
 }

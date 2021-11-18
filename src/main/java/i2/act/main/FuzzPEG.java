@@ -179,10 +179,11 @@ public final class FuzzPEG {
     final SelectionStrategy selectionStrategy =
         getSelectionStrategy(arguments, grammarGraph, coverage, rng);
 
-    final Fuzzer fuzzer =
-        new Fuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy, coverage);
+    final TreeFuzzer fuzzer =
+        new TreeFuzzer(grammarGraph, maxHeight, tokenGenerator, selectionStrategy, coverage);
 
-    FuzzerLoop fuzzerLoop = getFuzzerLoop(arguments, fuzzer, coverage, rng, initialSeed);
+    final FuzzerLoop<Node<?>> fuzzerLoop =
+        getFuzzerLoop(arguments, fuzzer, coverage, rng, initialSeed);
 
     final boolean resetCoverage = arguments.hasOption(OPTION_RESET_COVERAGE);
 
@@ -349,12 +350,12 @@ public final class FuzzPEG {
     }
   }
 
-  private static final FuzzerLoop getFuzzerLoop(final ProgramArguments arguments,
-      final Fuzzer fuzzer, final AlternativeCoverage coverage, final Random rng,
+  private static final <R> FuzzerLoop<R> getFuzzerLoop(final ProgramArguments arguments,
+      final Fuzzer<R>  fuzzer, final AlternativeCoverage coverage, final Random rng,
       final long initialSeed) {
     final int count = getCount(arguments);
 
-    FuzzerLoop fuzzerLoop = FuzzerLoop.fixedCount(
+    FuzzerLoop<R>  fuzzerLoop = FuzzerLoop.fixedCount(
         count, fuzzer, (loop) -> rng.setSeed(initialSeed + loop.numberOfAttempts()));
 
     if (arguments.hasOption(OPTION_ONLY_ADDITIONAL_COVERAGE)) {
