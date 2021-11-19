@@ -40,13 +40,13 @@ public final class TreeFuzzer extends Fuzzer<Node<?>> {
       return (parent == null) ? (node) : (parent);
     }
 
+    final Node<?> node = createNonTerminalNode(choice, parent);
+
     final int childHeight = childHeight(choice, maxHeight);
     final Alternative chosen =
         chooseAlternative(viableAlternatives(choice, childHeight), childHeight);
 
     track(chosen);
-
-    final Node<?> node = createNonTerminalNode(choice, parent);
 
     for (final Element element : elementsOf(chosen)) {
       final Node<?> quantifierNode = createQuantifierNode(element, node);
