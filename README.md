@@ -220,13 +220,13 @@ chosen (covered), but can also guide the generation process towards uncovered `A
 ## Generating Random Programs With FuzzPEG
 
 To just generate a single random program for a given grammar and to print it to stdout, simply call
-the `run.sh` helper script and pass the path to the grammar file as argument:
+the `fuzz.sh` helper script and pass the path to the grammar file as argument:
 
-    ./run.sh --grammar grammars/c.txt
+    ./fuzz.sh --grammar grammars/c.txt
 
 A more typical run of *FuzzPEG* might look as follows:
 
-    ./run.sh --grammar grammars/c.txt \
+    ./fuzz.sh --grammar grammars/c.txt \
       --seed 0 --count 100 \
       --selection 'reachesUncov(rand, small, true)' \
       --resetCoverage \
