@@ -51,7 +51,7 @@ public final class TreeFuzzer extends Fuzzer<Node<?>> {
     for (final Element element : elementsOf(chosen)) {
       final Node<?> quantifierNode = createQuantifierNode(element, node);
       for (int count = 0; generateMoreElements(element, count, childHeight); ++count) {
-        generate(element.getTarget(), childHeight, createItemNode(quantifierNode));
+        generate(element.getTarget(), childHeight, createItemNode(quantifierNode, element));
       }
     }
 
@@ -93,11 +93,13 @@ public final class TreeFuzzer extends Fuzzer<Node<?>> {
     }
   }
 
-  private final Node<?> createItemNode(final Node<?> parent) {
+  private final Node<?> createItemNode(final Node<?> parent, final Element element) {
     if (parent != null
         && (parent instanceof NonTerminalNode) && ((NonTerminalNode) parent).isQuantifierNode()) {
       final NonTerminalNode itemNode =
           new NonTerminalNode(ParserSymbol.LIST_ITEM, new ArrayList<>());
+
+      itemNode.setExpectedSymbol(element.getTarget().getGrammarSymbol());
 
       parent.getChildren().add(itemNode);
 
