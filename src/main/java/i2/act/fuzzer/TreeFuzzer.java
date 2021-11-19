@@ -49,8 +49,9 @@ public final class TreeFuzzer extends Fuzzer<Node<?>> {
     final Node<?> node = createNonTerminalNode(choice, parent);
 
     for (final Element element : elementsOf(chosen)) {
+      final Node<?> quantifierNode = createQuantifierNode(element, node);
       for (int count = 0; generateMoreElements(element, count, childHeight); ++count) {
-        generate(element.getTarget(), childHeight, node);
+        generate(element.getTarget(), childHeight, createItemNode(quantifierNode));
       }
     }
 
@@ -89,6 +90,54 @@ public final class TreeFuzzer extends Fuzzer<Node<?>> {
       return node;
     } else {
       return parent;
+    }
+  }
+
+  private final Node<?> createItemNode(final Node<?> parent) {
+    if (parent != null
+        && (parent instanceof NonTerminalNode) && ((NonTerminalNode) parent).isQuantifierNode()) {
+      final NonTerminalNode itemNode =
+          new NonTerminalNode(ParserSymbol.LIST_ITEM, new ArrayList<>());
+
+      parent.getChildren().add(itemNode);
+
+      return itemNode;
+    } else {
+      return parent;
+    }
+  }
+
+  private final Node<?> createQuantifierNode(final Element element, final Node<?> node) {
+    if (element.getQuantifier() == Element.Quantifier.QUANT_NONE) {
+      return node;
+    } else {
+      final ParserSymbol quantifierSymbol;
+      {
+        switch (element.getQuantifier()) {
+          case QUANT_OPTIONAL: {
+            quantifierSymbol = ParserSymbol.OPTIONAL;
+            break;
+          }
+          case QUANT_STAR: {
+            quantifierSymbol = ParserSymbol.STAR;
+            break;
+          }
+          case QUANT_PLUS: {
+            quantifierSymbol = ParserSymbol.PLUS;
+            break;
+          }
+          default: {
+            assert (false);
+            throw new RuntimeException("unknown quantifier: " + element.getQuantifier());
+          }
+        }
+      }
+
+      final NonTerminalNode quantifierNode =
+          new NonTerminalNode(quantifierSymbol, new ArrayList<Node<?>>());
+
+      node.getChildren().add(quantifierNode);
+      return quantifierNode;
     }
   }
 
