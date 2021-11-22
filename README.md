@@ -264,6 +264,10 @@ program generation:
   covered.
 - `--join <separator>`: Specifies the separator that two adjacent tokens should be separated with in
   the serialized output (if necessary); the default separator consists of a single space.
+- `--logCoverage <file name>`: If this option is set, *FuzzPEG* writes a log of the achieved
+  coverage to the CSV file given as argument. Each row consists of three columns: the number of
+  attempts, the number of programs (this excludes all discarded attempts), and the total number of
+  covered alternatives so far.
 
 ### Selection Strategy
 
