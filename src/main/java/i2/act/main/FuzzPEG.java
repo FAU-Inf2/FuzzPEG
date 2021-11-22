@@ -66,6 +66,8 @@ public final class FuzzPEG {
 
   private static final String OPTION_TEST_PEG = "--testPEG";
 
+  private static final String OPTION_LOG_COVERAGE = "--logCoverage";
+
   private static final String OPTION_PRINT_GRAMMAR_GRAPH = "--printGG";
   private static final String OPTION_PRINT_MIN_HEIGHTS = "--printMinHeights";
   private static final String OPTION_PRINT_MIN_MAX_HEIGHT = "--printMinMaxHeight";
@@ -96,6 +98,8 @@ public final class FuzzPEG {
     argumentsParser.addOption(OPTION_FIND_BUGS, false, true, "<test command>");
 
     argumentsParser.addOption(OPTION_TEST_PEG, false);
+
+    argumentsParser.addOption(OPTION_LOG_COVERAGE, false, true, "<file name>");
 
     argumentsParser.addOption(OPTION_PRINT_GRAMMAR_GRAPH, false);
     argumentsParser.addOption(OPTION_PRINT_MIN_HEIGHTS, false);
@@ -198,11 +202,25 @@ public final class FuzzPEG {
       return;
     }
 
+    final SafeWriter coverageLog;
+    {
+      if (arguments.hasOption(OPTION_LOG_COVERAGE)) {
+        coverageLog = SafeWriter.openFile(arguments.getOption(OPTION_LOG_COVERAGE));
+      } else {
+        coverageLog = null;
+      }
+    }
+
     for (final Node<?> tree : fuzzerLoop) {
       final String program = joiner.join(tree);
 
       final int index = fuzzerLoop.numberOfPrograms() - 1;
       final long seed = initialSeed + fuzzerLoop.numberOfAttempts() - 1;
+
+      if (coverageLog != null) {
+        final int attempt = fuzzerLoop.numberOfAttempts();
+        coverageLog.write("%d,%d,%d\n", attempt, index + 1, coverage.coveredCount());
+      }
 
       if (testPEG) {
         testPEG(program, lexer, parser, seed);
@@ -246,6 +264,10 @@ public final class FuzzPEG {
 
     if (arguments.hasOption(OPTION_PRINT_UNCOVERED)) {
       printUncovered(grammarGraph, coverage, reachable);
+    }
+
+    if (coverageLog != null) {
+      coverageLog.close();
     }
 
     final int numberOfAttempts = fuzzerLoop.numberOfAttempts();
