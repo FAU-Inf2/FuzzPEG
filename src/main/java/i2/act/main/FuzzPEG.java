@@ -205,7 +205,10 @@ public final class FuzzPEG {
     final SafeWriter coverageLog;
     {
       if (arguments.hasOption(OPTION_LOG_COVERAGE)) {
-        coverageLog = SafeWriter.openFile(arguments.getOption(OPTION_LOG_COVERAGE));
+        final String fileNameCoverageLog = arguments.getOption(OPTION_LOG_COVERAGE);
+
+        FileUtil.createPathIfNotExists(fileNameCoverageLog);
+        coverageLog = SafeWriter.openFile(fileNameCoverageLog);
       } else {
         coverageLog = null;
       }
