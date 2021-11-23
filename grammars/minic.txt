@@ -1,10 +1,10 @@
 program
-  : ( global_declaration ) <20>* EOF
+  : ( global_declaration ) <3>* EOF
   ;
 
 global_declaration
-  : variable_declaration
-  | function_declaration
+  : <3> variable_declaration
+  | <7> function_declaration
   ;
 
 variable_declaration
@@ -24,7 +24,7 @@ parameter_declaration
   ;
 
 block
-  : LBRACE ( statement )* RBRACE
+  : LBRACE ( statement ) <3>* RBRACE
   ;
 
 statement

@@ -1,9 +1,9 @@
 translation_unit
-  : ( external_declaration ) <20>* EOF
+  : ( external_declaration ) <3>* EOF
   ;
 
 external_declaration
-  : <7> function_definition
+  : <5> function_definition
   | <3> declaration
   ;
 
@@ -28,7 +28,6 @@ integer_literal
 
 float_literal
   : DECIMAL_FLOAT_LITERAL
-  #| HEXADECIMAL_FLOAT_LITERAL
   ;
 
 postfix_expression
@@ -308,12 +307,12 @@ initializer_list
   ;
 
 statement
-  : labeled_statement
-  | compound_statement
-  | expression_statement
-  | selection_statement
-  | iteration_statement
-  | jump_statement
+  : <1> labeled_statement
+  | <1> compound_statement
+  | <5> expression_statement
+  | <1> selection_statement
+  | <1> iteration_statement
+  | <1> jump_statement
   ;
 
 labeled_statement
@@ -323,15 +322,15 @@ labeled_statement
   ;
 
 compound_statement
-  : LBRACE ( declaration_list ) <3>? ( statement_list ) <3>? RBRACE
+  : LBRACE ( declaration_list ) <2>? ( statement_list ) <2>? RBRACE
   ;
 
 declaration_list
-  : ( declaration ) <3>+
+  : ( declaration ) <2>+
   ;
 
 statement_list
-  : ( statement ) <3>+
+  : ( statement ) <2>+
   ;
 
 expression_statement
