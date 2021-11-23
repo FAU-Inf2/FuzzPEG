@@ -9,8 +9,7 @@ import i2.act.peg.ast.Grammar;
 import i2.act.peg.builder.GrammarBuilder;
 import i2.act.peg.symbols.LexerSymbol;
 import i2.act.peg.symbols.ParserSymbol;
-
-import java.util.Random;
+import i2.act.util.RandomNumberGenerator;
 
 import static i2.act.peg.builder.GrammarBuilder.*;
 
@@ -23,11 +22,12 @@ public final class SelectionStrategyParser {
 
   public static final SelectionStrategy parse(final String string,
       final GrammarGraph grammarGraph, final AlternativeCoverage coverage, final long seed) {
-    return parse(string, grammarGraph, coverage, new Random(seed));
+    return parse(string, grammarGraph, coverage, new RandomNumberGenerator(seed));
   }
 
   public static final SelectionStrategy parse(final String string,
-      final GrammarGraph grammarGraph, final AlternativeCoverage coverage, final Random rng) {
+      final GrammarGraph grammarGraph, final AlternativeCoverage coverage,
+      final RandomNumberGenerator rng) {
     final GrammarBuilder builder = new GrammarBuilder();
 
     final LexerSymbol LPAREN = builder.define("LPAREN", "'('");

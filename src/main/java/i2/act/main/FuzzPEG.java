@@ -23,6 +23,7 @@ import i2.act.test.ExternalTestFunction;
 import i2.act.test.TestFunction;
 import i2.act.util.ArgumentSplitter;
 import i2.act.util.FileUtil;
+import i2.act.util.RandomNumberGenerator;
 import i2.act.util.SafeWriter;
 import i2.act.util.options.ProgramArguments;
 import i2.act.util.options.ProgramArgumentsParser;
@@ -30,7 +31,6 @@ import i2.act.util.options.ProgramArgumentsParser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -174,7 +174,7 @@ public final class FuzzPEG {
     final Lexer lexer = (testPEG) ? (Lexer.forGrammar(grammar)) : (null);
     final Parser parser = (testPEG) ? (Parser.fromGrammar(grammar)) : (null);
 
-    final Random rng = new Random();
+    final RandomNumberGenerator rng = new RandomNumberGenerator();
 
     final TokenGenerator tokenGenerator = new RandomTokenGenerator(grammarGraph, rng);
 
@@ -358,7 +358,8 @@ public final class FuzzPEG {
   }
 
   private static final SelectionStrategy getSelectionStrategy(final ProgramArguments arguments,
-      final GrammarGraph grammarGraph, final AlternativeCoverage coverage, final Random rng) {
+      final GrammarGraph grammarGraph, final AlternativeCoverage coverage,
+      final RandomNumberGenerator rng) {
     if (arguments.hasOption(OPTION_SELECTION)) {
       try {
         return SelectionStrategyParser.parse(
@@ -376,7 +377,7 @@ public final class FuzzPEG {
   }
 
   private static final <R> FuzzerLoop<R> getFuzzerLoop(final ProgramArguments arguments,
-      final Fuzzer<R>  fuzzer, final AlternativeCoverage coverage, final Random rng,
+      final Fuzzer<R>  fuzzer, final AlternativeCoverage coverage, final RandomNumberGenerator rng,
       final long initialSeed) {
     final int count = getCount(arguments);
 

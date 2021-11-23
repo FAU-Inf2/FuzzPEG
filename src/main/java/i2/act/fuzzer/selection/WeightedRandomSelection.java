@@ -2,8 +2,7 @@ package i2.act.fuzzer.selection;
 
 import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
-
-import java.util.Random;
+import i2.act.util.RandomNumberGenerator;
 
 public final class WeightedRandomSelection extends RandomSelection {
 
@@ -15,7 +14,7 @@ public final class WeightedRandomSelection extends RandomSelection {
     super(seed);
   }
 
-  public WeightedRandomSelection(final Random rng) {
+  public WeightedRandomSelection(final RandomNumberGenerator rng) {
     super(rng);
   }
 

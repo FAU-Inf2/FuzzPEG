@@ -4,12 +4,12 @@ import i2.act.test.ExternalTestFunction;
 import i2.act.test.TestFunction;
 import i2.act.util.ArgumentSplitter;
 import i2.act.util.FileUtil;
+import i2.act.util.RandomNumberGenerator;
 import i2.act.util.SafeWriter;
 import i2.act.util.options.ProgramArguments;
 import i2.act.util.options.ProgramArgumentsParser;
 
 import java.util.LinkedHashSet;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -99,7 +99,7 @@ public final class RandomStrings {
       return;
     }
 
-    final Random rng = new Random();
+    final RandomNumberGenerator rng = new RandomNumberGenerator();
 
     final RandomStrings randomStrings = new RandomStrings(rng);
 
@@ -210,9 +210,9 @@ public final class RandomStrings {
 
   // ===============================================================================================
 
-  private final Random rng;
+  private final RandomNumberGenerator rng;
 
-  public RandomStrings(final Random rng) {
+  public RandomStrings(final RandomNumberGenerator rng) {
     this.rng = rng;
   }
 

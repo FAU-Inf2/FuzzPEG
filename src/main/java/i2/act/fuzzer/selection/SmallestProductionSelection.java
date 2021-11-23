@@ -5,17 +5,17 @@ import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
 import i2.act.grammargraph.GrammarGraphNode;
 import i2.act.grammargraph.properties.MinSizeComputation;
+import i2.act.util.RandomNumberGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public final class SmallestProductionSelection implements SelectionStrategy {
 
   private final SelectionStrategy baseStrategy;
   private final double probability;
-  private final Random rng;
+  private final RandomNumberGenerator rng;
 
   private final Map<GrammarGraphNode<?,?>, Integer> minSizes;
 
@@ -26,11 +26,12 @@ public final class SmallestProductionSelection implements SelectionStrategy {
 
   public SmallestProductionSelection(final GrammarGraph grammarGraph,
       final SelectionStrategy baseStrategy, final double probability, final long seed) {
-    this(grammarGraph, baseStrategy, probability, new Random(seed));
+    this(grammarGraph, baseStrategy, probability, new RandomNumberGenerator(seed));
   }
 
   public SmallestProductionSelection(final GrammarGraph grammarGraph,
-      final SelectionStrategy baseStrategy, final double probability, final Random rng) {
+      final SelectionStrategy baseStrategy, final double probability,
+      final RandomNumberGenerator rng) {
     this.minSizes = MinSizeComputation.computeMinSizes(grammarGraph);
 
     this.baseStrategy = baseStrategy;

@@ -2,23 +2,23 @@ package i2.act.fuzzer.selection;
 
 import i2.act.grammargraph.GrammarGraphEdge.Alternative;
 import i2.act.grammargraph.GrammarGraphEdge.Element;
+import i2.act.util.RandomNumberGenerator;
 
 import java.util.List;
-import java.util.Random;
 
 public abstract class RandomSelection implements SelectionStrategy {
 
-  private final Random rng;
+  private final RandomNumberGenerator rng;
 
   public RandomSelection() {
     this(System.currentTimeMillis());
   }
 
   public RandomSelection(final long seed) {
-    this(new Random(seed));
+    this(new RandomNumberGenerator(seed));
   }
 
-  public RandomSelection(final Random rng) {
+  public RandomSelection(final RandomNumberGenerator rng) {
     this.rng = rng;
   }
 

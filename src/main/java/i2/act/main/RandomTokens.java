@@ -10,13 +10,13 @@ import i2.act.test.ExternalTestFunction;
 import i2.act.test.TestFunction;
 import i2.act.util.ArgumentSplitter;
 import i2.act.util.FileUtil;
+import i2.act.util.RandomNumberGenerator;
 import i2.act.util.SafeWriter;
 import i2.act.util.options.ProgramArguments;
 import i2.act.util.options.ProgramArgumentsParser;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,7 +114,7 @@ public final class RandomTokens {
       return;
     }
 
-    final Random rng = new Random();
+    final RandomNumberGenerator rng = new RandomNumberGenerator();
 
     final TokenGenerator tokenGenerator = new RandomTokenGenerator(grammar, rng);
 
@@ -188,10 +188,10 @@ public final class RandomTokens {
   private final List<LexerSymbol> lexerSymbols;
   private final TokenGenerator tokenGenerator;
   private final TokenJoiner joiner;
-  private final Random rng;
+  private final RandomNumberGenerator rng;
 
   public RandomTokens(final Grammar grammar, final TokenGenerator tokenGenerator,
-      final TokenJoiner joiner, final Random rng) {
+      final TokenJoiner joiner, final RandomNumberGenerator rng) {
     this.lexerSymbols = grammar.getLexerSymbols();
     this.tokenGenerator = tokenGenerator;
     this.joiner = joiner;

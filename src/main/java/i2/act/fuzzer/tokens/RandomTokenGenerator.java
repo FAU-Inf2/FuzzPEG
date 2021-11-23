@@ -14,22 +14,22 @@ import i2.act.peg.ast.Group;
 import i2.act.peg.ast.Range;
 import i2.act.peg.ast.SingleCharacter;
 import i2.act.peg.symbols.LexerSymbol;
+import i2.act.util.RandomNumberGenerator;
 
 import java.util.List;
-import java.util.Random;
 
 public final class RandomTokenGenerator implements TokenGenerator {
 
   private final Lexer lexer;
-  private final Random rng;
+  private final RandomNumberGenerator rng;
 
   private final boolean checkTokens = true; // TODO make configurable
 
-  public RandomTokenGenerator(final GrammarGraph grammarGraph, final Random rng) {
+  public RandomTokenGenerator(final GrammarGraph grammarGraph, final RandomNumberGenerator rng) {
     this(grammarGraph.getGrammar(), rng);
   }
 
-  public RandomTokenGenerator(final Grammar grammar, final Random rng) {
+  public RandomTokenGenerator(final Grammar grammar, final RandomNumberGenerator rng) {
     this.lexer = Lexer.forGrammar(grammar);
     this.rng = rng;
   }
